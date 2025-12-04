@@ -5,7 +5,6 @@
 .about-page {
   width: 100%;
   overflow-x: hidden;
-  /* NO background aquí → lo pone .art-page-background con los tokens */
   padding: 96px 8% 110px;
   color: var(--ac-text-main);
   display: flex;
@@ -83,14 +82,13 @@
     color 0.15s ease;
 }
 
-/* Usamos los accents globales para el gradiente */
 .about-btn-primary {
   background: linear-gradient(
     135deg,
     var(--ac-accent-primary),
     var(--ac-accent-secondary)
   );
-  color: #020617; /* contraste bueno sobre el gradiente, en ambos temas */
+  color: #020617; 
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
 }
 
@@ -571,7 +569,6 @@
     align-items: stretch;
   }
 }
-/* Pills adaptados al tema claro */
 :root[data-theme="light"] .about-pill {
   background: var(--ac-surface);
   color: var(--ac-text-main);

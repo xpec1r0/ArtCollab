@@ -8,7 +8,7 @@ function TextField({
   rightElement,
   leftElement,
   helperText,
-  variant = "default", // 'default' | 'bare'
+  variant = "default",
   className = "",
   ...rest
 }) {

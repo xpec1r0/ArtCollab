@@ -31,7 +31,6 @@ const PROJECT_TYPE_OPTIONS = [
   { value: "studio", label: "Studio / collective" },
 ];
 
-// Normalizador súper flexible para la respuesta de búsqueda de usuarios
 function normalizeUserList(payload) {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
@@ -45,45 +44,34 @@ function CreateProjectPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Form state
   const [title, setTitle] = useState("");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState("collaboration");
   const [disciplines, setDisciplines] = useState([]);
-  const [visibility, setVisibility] = useState("private"); // 'private' | 'public'
+  const [visibility, setVisibility] = useState("private");
 
-  // Cover / Cloudinary
-  const [cover, setCover] = useState(null); // { url, publicId }
+  const [cover, setCover] = useState(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState(null);
 
-  // Colaboradores (finales del proyecto)
-  const [collaborators, setCollaborators] = useState([]); // [{_id, username, name, avatarUrl}]
+  const [collaborators, setCollaborators] = useState([]);
 
-  // Estado del buscador de colaboradores (para el modal)
   const [collabQuery, setCollabQuery] = useState("");
   const [collabResults, setCollabResults] = useState([]);
   const [collabSearching, setCollabSearching] = useState(false);
   const [collabError, setCollabError] = useState(null);
 
-  // Modal de colaboradores
   const [isCollabModalOpen, setIsCollabModalOpen] = useState(false);
 
-  // Submit
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState(null);
 
-  // Reglas: solo ciertos tipos soportan colaboradores
   const canHaveCollaborators = projectType !== "portfolio";
-
-  /* ========== Helpers ========== */
 
   const toggleDiscipline = (value) => {
     setDisciplines((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
 
@@ -93,8 +81,6 @@ function CreateProjectPage() {
 
   const handleProjectTypeChange = (value) => {
     setProjectType(value);
-    // No borramos los colaboradores: si el usuario vuelve a collaboration/studio,
-    // los recupera. Simplemente se ignoran en el payload si el tipo es "portfolio".
   };
 
   const closeCollabModal = () => {
@@ -104,8 +90,6 @@ function CreateProjectPage() {
     setCollabError(null);
     setCollabSearching(false);
   };
-
-  /* ========== Cloudinary: upload de cover ========== */
 
   const handleCoverChange = async (event) => {
     const file = event.target.files?.[0];
@@ -118,8 +102,6 @@ function CreateProjectPage() {
     formData.append("file", file);
 
     try {
-      // Ajusta la ruta si tu backend usa otro endpoint:
-      // por ejemplo /api/media/upload o similar.
       const res = await api.post("/media/projects/cover", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -152,11 +134,7 @@ function CreateProjectPage() {
     setCoverError(null);
   };
 
-  /* ========== Búsqueda reactiva de colaboradores (solo en modal) ========== */
-
   useEffect(() => {
-    // Si el modal está cerrado o el tipo de proyecto no soporta colaboradores,
-    // no disparamos búsquedas.
     if (!isCollabModalOpen || !canHaveCollaborators) {
       return;
     }
@@ -175,8 +153,6 @@ function CreateProjectPage() {
       setCollabError(null);
 
       try {
-        // Ajusta esta ruta para que coincida con tu backend:
-        // idea típica: GET /users/search?q=...
         const res = await api.get("/users/search", {
           params: { q: query, limit: 6 },
           signal: controller.signal,
@@ -209,7 +185,13 @@ function CreateProjectPage() {
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [collabQuery, collaborators, user, isCollabModalOpen, canHaveCollaborators]);
+  }, [
+    collabQuery,
+    collaborators,
+    user,
+    isCollabModalOpen,
+    canHaveCollaborators,
+  ]);
 
   const handleAddCollaborator = (candidate) => {
     const id = candidate._id || candidate.id;
@@ -230,7 +212,6 @@ function CreateProjectPage() {
     );
   };
 
-  // Chips reutilizables (tarjeta + modal)
   const collaboratorChips = collaborators.map((c) => {
     const id = c._id || c.id;
     const name =
@@ -252,8 +233,6 @@ function CreateProjectPage() {
       </span>
     );
   });
-
-  /* ========== Submit ========== */
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -278,16 +257,13 @@ function CreateProjectPage() {
         tagline: tagline.trim() || undefined,
         projectType,
         disciplines,
-        visibility, // "public" | "private"
+        visibility,
         isPublic: visibility === "public",
-        // El backend normalmente infiere el owner desde el token,
-        // pero por si acaso, mandamos el id también.
+
         owner: user?._id || user?.id,
-        // Solo mandamos colaboradores si el tipo lo soporta
+
         collaborators: canHaveCollaborators
-          ? collaborators
-              .map((c) => c._id || c.id)
-              .filter(Boolean)
+          ? collaborators.map((c) => c._id || c.id).filter(Boolean)
           : [],
         coverImage: cover
           ? {
@@ -297,13 +273,10 @@ function CreateProjectPage() {
           : undefined,
       };
 
-      // Ajusta la ruta si tu backend expone otra cosa
       const res = await api.post("/projects", payload);
       const created = res.data?.project || res.data;
       const projectId = created?._id || created?.id;
 
-      // Después de crear, lo mandamos a My Projects.
-      // Si luego tienes página de detalle: navigate(`/projects/${projectId}`)
       navigate("/my-projects");
     } catch (err) {
       console.error("Error creating project", err);
@@ -324,8 +297,6 @@ function CreateProjectPage() {
   const handleCancel = () => {
     navigate("/my-projects");
   };
-
-  /* ========== Render ========== */
 
   return (
     <section className="project-create-page art-page-background">
@@ -376,9 +347,7 @@ function CreateProjectPage() {
             <div className="project-create-main">
               <div className="project-create-card">
                 {formError && (
-                  <div className="project-create-form-error">
-                    {formError}
-                  </div>
+                  <div className="project-create-form-error">{formError}</div>
                 )}
 
                 <div className="project-create-field">
@@ -432,9 +401,7 @@ function CreateProjectPage() {
 
                 <div className="project-create-grid-row">
                   <div className="project-create-field">
-                    <label className="project-create-label">
-                      Project type
-                    </label>
+                    <label className="project-create-label">Project type</label>
                     <div className="project-create-pill-group">
                       {PROJECT_TYPE_OPTIONS.map((opt) => (
                         <button
@@ -452,9 +419,7 @@ function CreateProjectPage() {
                   </div>
 
                   <div className="project-create-field">
-                    <label className="project-create-label">
-                      Disciplines
-                    </label>
+                    <label className="project-create-label">Disciplines</label>
                     <div className="project-create-pill-group">
                       {DISCIPLINE_OPTIONS.map((opt) => {
                         const active = disciplines.includes(opt.value);
@@ -555,8 +520,7 @@ function CreateProjectPage() {
                         Private
                       </span>
                       <span className="project-create-visibility-sub">
-                        Only you and invited collaborators can see this
-                        project.
+                        Only you and invited collaborators can see this project.
                       </span>
                     </div>
                   </button>
@@ -576,8 +540,8 @@ function CreateProjectPage() {
                         Public
                       </span>
                       <span className="project-create-visibility-sub">
-                        Visible in Explore &amp; Projects. Great for open
-                        calls, showcases and commissions.
+                        Visible in Explore &amp; Projects. Great for open calls,
+                        showcases and commissions.
                       </span>
                     </div>
                   </button>

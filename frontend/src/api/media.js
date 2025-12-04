@@ -27,7 +27,6 @@ export function buildMediaFormData({
     formData.append("tags", tags.join(","));
   }
 
-  // De momento metadata sencillo: si viene algo, lo mandamos como JSON string
   if (metadata && Object.keys(metadata).length > 0) {
     formData.append("metadata", JSON.stringify(metadata));
   }
@@ -79,7 +78,6 @@ export async function toggleMediaLike(id) {
   return res.data;
 }
 
-// Colaboradores de media
 export async function addMediaCollaborator(id, { userId, role = "viewer" }) {
   const res = await api.post(`/media/${id}/collaborators`, { userId, role });
   return res.data;

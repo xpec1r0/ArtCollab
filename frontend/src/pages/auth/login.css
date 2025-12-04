@@ -10,7 +10,6 @@
   overflow: hidden;
 }
 
-/* subtle overlay on top of art-page-background */
 .login-bg-overlay {
   position: absolute;
   inset: 0;
@@ -39,7 +38,6 @@
   margin-bottom: 1.4rem;
 }
 
-/* small logo with gold/indigo accent */
 .login-logo-circle {
   width: 42px;
   height: 42px;
@@ -137,7 +135,6 @@
   color: #64748b;
 }
 
-/* global error alert */
 .login-alert {
   display: flex;
   gap: 0.55rem;
@@ -158,8 +155,6 @@
   border-radius: 999px;
   background-color: #fecaca;
 }
-
-/* bottom row with helper + link */
 .login-row {
   display: flex;
   justify-content: space-between;
@@ -179,7 +174,6 @@
   color: #fef3c7;
 }
 
-/* footer text */
 .login-footer-text {
   margin-top: 1.3rem;
   font-size: 0.78rem;

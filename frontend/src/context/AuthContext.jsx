@@ -1,10 +1,5 @@
 // src/context/AuthContext.jsx
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../api/client";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -12,7 +7,6 @@ import toast from "react-hot-toast";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Boot from localStorage para que el UI arranque con algo y no parpadee
   const [user, setUser] = useState(() => {
     try {
       const raw = localStorage.getItem("auth_user");
@@ -24,7 +18,6 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  // ---- helpers to persist in localStorage ----
   const persistUser = (nextUser) => {
     setUser(nextUser);
     if (nextUser) {
@@ -42,14 +35,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ---- fetch current user from backend (single source of truth) ----
   const fetchCurrentUser = async () => {
     try {
       const res = await api.get("/auth/me");
       const data = res.data;
 
-      let currentUser =
-        data?.user || data?.currentUser || data?.data || null;
+      let currentUser = data?.user || data?.currentUser || data?.data || null;
 
       if (
         !currentUser &&
@@ -61,7 +52,6 @@ export function AuthProvider({ children }) {
       }
 
       if (!currentUser) {
-        // no user in payload, but call succeeded → treat as unauthenticated
         persistUser(null);
         return null;
       }
@@ -69,10 +59,9 @@ export function AuthProvider({ children }) {
       persistUser(currentUser);
       return currentUser;
     } catch (error) {
-      // 401 → sesión no válida / expirada
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         persistUser(null);
-        persistToken(null); // 🔴 IMPORTANTE: limpiamos también el token
+        persistToken(null);
         return null;
       }
 
@@ -113,7 +102,6 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // ---- login ----
   const login = async ({ identifier, password }) => {
     setLoading(true);
     try {
@@ -132,8 +120,7 @@ export function AuthProvider({ children }) {
       persistToken(token || null);
 
       // Try to get user from login response
-      let loggedUser =
-        data?.user || data?.currentUser || data?.data || null;
+      let loggedUser = data?.user || data?.currentUser || data?.data || null;
 
       if (
         !loggedUser &&
@@ -190,8 +177,7 @@ export function AuthProvider({ children }) {
       const res = await api.post("/auth/register", payload);
       const data = res.data;
 
-      let createdUser =
-        data?.user || data?.currentUser || data?.data || null;
+      let createdUser = data?.user || data?.currentUser || data?.data || null;
       const token = data?.token || data?.accessToken || null;
 
       if (token) {
@@ -248,14 +234,10 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-    refreshUser: fetchCurrentUser, // useful after profile updates
+    refreshUser: fetchCurrentUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

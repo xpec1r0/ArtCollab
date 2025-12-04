@@ -1,9 +1,6 @@
 // src/api/users.js
 import { api } from "./client";
 
-/**
- * Normaliza respuestas tipo { user }, { currentUser }, { data } o payload plano.
- */
 const unwrapUser = (data) => {
   if (!data || typeof data !== "object") return null;
   return data.user || data.currentUser || data.data || data;
@@ -32,7 +29,6 @@ export const deactivateMyAccount = async () => {
   return res.data;
 };
 
-// Para cuando hagamos el perfil público /u/:id o similar
 export const getUserPublicProfile = async (userId) => {
   const res = await api.get(`/users/${userId}`);
   return unwrapUser(res.data);

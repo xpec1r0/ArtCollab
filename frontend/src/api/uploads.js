@@ -2,7 +2,6 @@
 import { createMedia } from "./media";
 
 /**
- * Sube una imagen de perfil/portada usando /api/media
  * kind: 'avatar' | 'cover'
  */
 export async function uploadProfileImage(file, { kind = "avatar" } = {}) {
@@ -17,10 +16,8 @@ export async function uploadProfileImage(file, { kind = "avatar" } = {}) {
       ? "User profile cover image"
       : "User profile avatar image",
     mediaType: "image",
-    // 👇 TIENE que ser uno de los permitidos por el backend
     category: "other",
     visibility: "private",
-    // 👇 NO MANDAMOS TAGS para no romper el validador isArray()
     // tags: undefined,
     metadata: {
       usage: "profile",
@@ -35,16 +32,14 @@ export async function uploadProfileImage(file, { kind = "avatar" } = {}) {
   let imageUrl;
 
   if (isCover) {
-    // 🖼 Para el cover queremos EXACTAMENTE lo que recortó el usuario
     imageUrl =
       media.cloudUrl ||
       media.secureUrl ||
       media.secure_url ||
       media.url ||
       media.location ||
-      media.thumbnailUrl; // último recurso
+      media.thumbnailUrl;
   } else {
-    // 👤 Para avatar nos viene bien el thumb cuadrado; si no, caemos al original
     imageUrl =
       media.thumbnailUrl ||
       media.cloudUrl ||

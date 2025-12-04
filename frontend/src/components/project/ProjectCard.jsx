@@ -46,7 +46,6 @@ function ProjectCard({ project, variant = "grid" }) {
     isFeatured,
   } = project;
 
-  // Derivar likes / views desde distintas formas que puede traer el backend
   const likeCount =
     project.likeCount ??
     (Array.isArray(project.likes) ? project.likes.length : undefined) ??
@@ -60,7 +59,6 @@ function ProjectCard({ project, variant = "grid" }) {
       ? project.viewsCount
       : 0;
 
-  // Cover: usar coverImageUrl o intentar sacar algo del array de media si existe
   let resolvedCover = coverImageUrl || null;
   if (!resolvedCover && Array.isArray(project.media) && project.media.length) {
     const primary =
@@ -141,9 +139,7 @@ function ProjectCard({ project, variant = "grid" }) {
         {/* Badges */}
         <div className="absolute left-3 right-3 top-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant={typeVariant}>
-              {projectType || "Project"}
-            </Badge>
+            <Badge variant={typeVariant}>{projectType || "Project"}</Badge>
             {status && (
               <Badge variant={statusVariant}>
                 {statusKey === "on_hold"
@@ -168,7 +164,9 @@ function ProjectCard({ project, variant = "grid" }) {
       <div
         className={[
           "flex flex-1 flex-col",
-          isListVariant ? "px-3.5 py-3.5 md:px-4 md:py-3.5" : "px-3.5 pt-3 pb-3.5",
+          isListVariant
+            ? "px-3.5 py-3.5 md:px-4 md:py-3.5"
+            : "px-3.5 pt-3 pb-3.5",
         ]
           .filter(Boolean)
           .join(" ")}

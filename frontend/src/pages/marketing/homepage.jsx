@@ -3,12 +3,10 @@ import React, { useEffect, useRef } from "react";
 import "./homepage.css";
 import { Link } from "react-router-dom";
 
-// 🔹 Nuevos componentes UI (ajusta paths según tu estructura)
 import Card from "../../components/ui/Card";
 import CardGrid from "../../components/ui/CardGrid";
 import ArtMosaicCarousel from "../../components/ui/ArtMosaicCarousel";
 
-// Data del carrusel (solo data, nada de lógica)
 const GALLERY_SLIDES = [
   {
     id: "gallery-1",
@@ -80,8 +78,7 @@ const GALLERY_SLIDES = [
     link: "https://onyxmusings.substack.com/p/loneliness-goes-for-your-eyes-first?r=5o9jti&utm_campaign=post&utm_medium=web&triedRedirect=true",
     ctaLabel: "Read full story →",
     image: "/images/homepage/story.jpg",
-    imageAlt:
-      "Illustration for the story Loneliness Goes for Your Eyes First",
+    imageAlt: "Illustration for the story Loneliness Goes for Your Eyes First",
   },
 ];
 
@@ -97,8 +94,7 @@ const Homepage = () => {
     const author = authorRef.current;
     if (!element) return;
 
-    const text =
-      `"Art, to me, is absolute expression. It is not science but rather it's when science becomes loose and mastered."`;
+    const text = `"Art, to me, is absolute expression. It is not science but rather it's when science becomes loose and mastered."`;
     const typingText = element.querySelector(".typing-text");
     const cursor = element.querySelector(".cursor");
 

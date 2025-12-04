@@ -1,6 +1,3 @@
-/* ===========================
-   GLOBAL SMOOTHNESS
-   =========================== */
 
 html {
   scroll-behavior: smooth;
@@ -12,23 +9,15 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ===========================
-   HOMEPAGE WRAPPER
-   =========================== */
-
 .homepage {
   width: 100%;
   overflow-x: hidden;
 }
 
-/* Espaciado base de secciones (sin machimbrado agresivo) */
 .homepage section {
   padding: clamp(72px, 10vh, 104px) min(8vw, 96px);
 }
 
-/* ===========================
-   HERO SECTION
-   =========================== */
 
 .hero {
   position: relative;
@@ -60,7 +49,6 @@ body {
   align-items: center;
 }
 
-/* Animaciones suaves de entrada */
 
 @keyframes heroFloatUp {
   from {
@@ -179,7 +167,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Right side – art stack */
 
 .hero-art-stack {
   position: relative;
@@ -190,7 +177,6 @@ body {
   gap: 0.9rem;
 }
 
-/* Marco principal de la imagen */
 
 .hero-main-frame {
   border-radius: 24px;
@@ -218,8 +204,6 @@ body {
   object-fit: cover;
   aspect-ratio: 4 / 5;
 }
-
-/* Mini cards debajo de la imagen */
 
 .hero-meta-row {
   display: grid;
@@ -336,10 +320,6 @@ body {
     transform-origin: left;
   }
 }
-
-/* ===========================
-   SECTION 2 – DISCIPLINES
-   =========================== */
 
 .section2 {
   position: relative;
@@ -465,7 +445,6 @@ body {
   line-height: 1.6;
 }
 
-/* Learn more button */
 .learn-btn {
   margin-top: auto;
   align-self: flex-start;
@@ -491,9 +470,6 @@ body {
   box-shadow: 0 10px 22px rgba(5, 8, 22, 0.8);
 }
 
-/* ===========================
-   SECTION 3 – SLIDESHOW / GALLERY
-   =========================== */
 
 .section3 {
   position: relative;
@@ -534,7 +510,6 @@ body {
   color: var(--ac-text-muted);
 }
 
-/* Wrapper del carrusel */
 .slideshow-wrapper {
   position: relative;
   width: 100%;
@@ -562,14 +537,12 @@ body {
   box-shadow: 0 26px 70px rgba(5, 8, 22, 0.98);
 }
 
-/* Contenedor del slide actual */
 .slideshow-container {
   position: relative;
   width: 100%;
   min-height: 320px;
 }
 
-/* Layout mosaico */
 .slideshow-container.mosaic-layout {
   display: grid;
   grid-template-columns: 1.8fr 1fr 1fr 1fr;
@@ -577,7 +550,6 @@ body {
   align-items: stretch;
 }
 
-/* Big main image */
 .big-img img {
   width: 100%;
   height: 100%;
@@ -589,7 +561,6 @@ body {
   cursor: zoom-in;
 }
 
-/* The stacked columns (2 images per column) */
 .col {
   display: grid;
   grid-template-rows: 1fr 1fr;
@@ -608,7 +579,6 @@ body {
   cursor: zoom-in;
 }
 
-/* Hover suave en el mosaico */
 .slideshow-container.mosaic-layout:hover .big-img img {
   transform: translateY(-4px) scale(1.01);
   box-shadow: 0 18px 40px rgba(5, 8, 22, 0.96);
@@ -619,7 +589,6 @@ body {
   box-shadow: 0 12px 28px rgba(5, 8, 22, 0.9);
 }
 
-/* Arrow Buttons */
 .arrow {
   position: absolute;
   top: 50%;
@@ -652,7 +621,6 @@ body {
   right: 0.4rem;
 }
 
-/* Animación de entrada suave */
 .fade {
   animation: slideFadeIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: opacity, transform;
@@ -669,7 +637,6 @@ body {
   }
 }
 
-/* Slideshow 4 – story layout */
 .story-layout {
   display: flex !important;
   justify-content: space-between;
@@ -702,7 +669,6 @@ body {
   cursor: zoom-in;
 }
 
-/* Eyebrow de la historia destacada */
 .story-eyebrow {
   font-size: 0.8rem;
   letter-spacing: 0.16em;
@@ -711,7 +677,6 @@ body {
   margin-bottom: 0.4rem;
 }
 
-/* Dots de navegación del carrusel */
 .slideshow-dots {
   margin-top: 1.4rem;
   display: flex;
@@ -738,7 +703,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Read More Button */
 .read-more-btn {
   display: inline-block;
   padding: 0.6rem 1.2rem;
@@ -759,9 +723,6 @@ body {
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.9);
 }
 
-/* ===========================
-   MODAL / LIGHTBOX
-   =========================== */
 
 .media-modal {
   position: fixed;
@@ -788,7 +749,6 @@ body {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.9);
 }
 
-/* Botón de cierre minimalista, flotando fuera de la imagen */
 .media-modal-close {
   position: absolute;
   top: -0.8rem;
@@ -817,9 +777,6 @@ body {
   opacity: 1;
 }
 
-/* ===========================
-   SECTION 4 – PRACTICE / QUALITY
-   =========================== */
 
 .section4 {
   position: relative;
@@ -894,10 +851,6 @@ body {
   }
 }
 
-/* ===========================
-   QUOTE SECTION
-   =========================== */
-
 .quote-section {
   position: relative;
   display: flex;
@@ -937,7 +890,6 @@ body {
   backdrop-filter: blur(18px);
 }
 
-/* Typing quote text */
 .quote {
   font-size: clamp(1.6rem, 2.2vw, 2rem);
   font-weight: 600;
@@ -971,9 +923,6 @@ body {
   transition: opacity 1s ease, transform 1s ease;
 }
 
-/* ===========================
-   SECTION 5 – CONTACT
-   =========================== */
 
 .section5 {
   position: relative;
@@ -1110,11 +1059,7 @@ body {
   box-shadow: 0 14px 32px rgba(5, 8, 22, 0.95);
 }
 
-/* ===========================
-   LIGHT THEME OVERRIDES
-   =========================== */
 
-/* Hero modo claro: más contraste en textos tipo "Visual · Sound · ..." */
 :root[data-theme="light"] .hero {
   color: var(--ac-text-main);
 }
@@ -1153,7 +1098,6 @@ body {
   color: #0f172a;
 }
 
-/* Cards modo claro */
 :root[data-theme="light"] .card {
   background: linear-gradient(135deg, var(--ac-surface-soft), #ffffff);
   border-color: rgba(148, 163, 184, 0.45);
@@ -1168,7 +1112,6 @@ body {
   );
 }
 
-/* Slideshow modo claro */
 :root[data-theme="light"] .slideshow-wrapper {
   background: linear-gradient(135deg, #f9fafb, #e5e7eb);
   border-color: rgba(148, 163, 184, 0.5);
@@ -1185,14 +1128,12 @@ body {
   color: #4b5563;
 }
 
-/* Quote modo claro */
 :root[data-theme="light"] .glass-quote {
   background: linear-gradient(135deg, #ffffff, #f9fafb);
   border-color: rgba(148, 163, 184, 0.45);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
 }
 
-/* Contact modo claro – estilo hundido tipo búsqueda/footer */
 :root[data-theme="light"] .section5-grid {
   background: var(--ac-bg-soft);
   border-color: rgba(148, 163, 184, 0.4);
@@ -1221,7 +1162,6 @@ body {
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
 }
 
-/* Métricas (chips) en modo claro: versión más "studio" */
 :root[data-theme="light"] .metric-pill {
   background:
     radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.16), transparent 60%),
@@ -1232,19 +1172,15 @@ body {
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
 }
 
-/* El "soft" como chip crema con tinte de color */
 :root[data-theme="light"] .metric-pill-soft {
   background:
     linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(79, 70, 229, 0.08)),
     #fdfdfb;
-  color: #111827; /* texto oscuro, legible de verdad */
+  color: #111827;
   border-color: rgba(148, 163, 184, 0.85);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
 }
 
-/* ===========================
-   RESPONSIVE
-   =========================== */
 
 @media (max-width: 992px) {
   .hero-inner {

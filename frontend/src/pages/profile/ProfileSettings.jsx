@@ -24,7 +24,6 @@ const SPECIALIZATION_OPTIONS = [
   { value: "other", label: "Other / hybrid" },
 ];
 
-// helper para leer File -> dataURL (para el crop)
 const fileToDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -79,11 +78,10 @@ function ProfileSettings() {
     confirmNewPassword: "",
   });
 
-  // --- estado para el crop ---
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
-  const [cropKind, setCropKind] = useState("avatar"); // 'avatar' | 'cover'
-  const [coverAspect, setCoverAspect] = useState(3); // se ajusta midiendo el cover real
+  const [cropKind, setCropKind] = useState("avatar");
+  const [coverAspect, setCoverAspect] = useState(3);
 
   const mergeProfileIntoForm = (userData) => {
     if (!userData) return;
@@ -113,7 +111,6 @@ function ProfileSettings() {
     }));
   };
 
-  // Cargar perfil desde backend al entrar al módulo (solo una vez)
   useEffect(() => {
     let cancelled = false;
 
@@ -149,7 +146,6 @@ function ProfileSettings() {
     };
   }, [authUser]);
 
-  // medir proporción real del cover para que el crop tenga el mismo aspect ratio
   const measureCoverAspect = useCallback(() => {
     if (!coverRef.current) return;
     const rect = coverRef.current.getBoundingClientRect();
@@ -162,7 +158,6 @@ function ProfileSettings() {
 
   useEffect(() => {
     if (!loadingProfile) {
-      // pequeño delay para asegurarnos que el DOM ya pintó el cover
       const id = setTimeout(measureCoverAspect, 0);
       return () => clearTimeout(id);
     }
@@ -210,8 +205,6 @@ function ProfileSettings() {
     }));
   };
 
-  // --- flujo de CROP ---
-
   const openCropForFile = async (file, kind) => {
     try {
       const dataUrl = await fileToDataUrl(file);
@@ -219,7 +212,7 @@ function ProfileSettings() {
         throw new Error("Could not read image file.");
       }
       if (kind === "cover") {
-        measureCoverAspect(); // aseguramos ratio actualizado justo antes de abrir
+        measureCoverAspect();
       }
       setCropKind(kind);
       setCropImageSrc(dataUrl);
@@ -288,7 +281,6 @@ function ProfileSettings() {
     }
   };
 
-  // 📸 Avatar: file input -> abre crop
   const handleAvatarFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -304,7 +296,6 @@ function ProfileSettings() {
     setAvatarMenuOpen(false);
   };
 
-  // 🖼️ Cover: file input -> abre crop
   const handleCoverFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -320,7 +311,6 @@ function ProfileSettings() {
     setCoverMenuOpen(false);
   };
 
-  // Menú avatar
   const handleAvatarMenuUpload = (e) => {
     e.stopPropagation();
     if (avatarInputRef.current) {
@@ -334,7 +324,6 @@ function ProfileSettings() {
     setAvatarMenuOpen(false);
   };
 
-  // Menú cover
   const handleCoverMenuUpload = (e) => {
     e.stopPropagation();
     if (coverInputRef.current) {
@@ -348,9 +337,6 @@ function ProfileSettings() {
     setCoverMenuOpen(false);
   };
 
-  // click sobre la zona del cover:
-  // - si NO hay imagen => abrimos file picker directo (no menú)
-  // - si hay imagen => togglamos menú
   const handleCoverClick = () => {
     if (!form.coverImage) {
       if (coverInputRef.current) {
@@ -361,7 +347,6 @@ function ProfileSettings() {
     }
   };
 
-  // ⚙️ Guardar "Public profile"
   const handleSavePublicProfile = async (e) => {
     e.preventDefault();
     try {
@@ -391,7 +376,6 @@ function ProfileSettings() {
     }
   };
 
-  // ⚙️ Guardar "Preferences"
   const handleSavePreferences = async (e) => {
     e.preventDefault();
     try {
@@ -416,7 +400,6 @@ function ProfileSettings() {
     }
   };
 
-  // 🔐 Cambiar contraseña
   const handleChangePassword = async (e) => {
     e.preventDefault();
     const { currentPassword, newPassword, confirmNewPassword } = passwordForm;
@@ -451,7 +434,6 @@ function ProfileSettings() {
     }
   };
 
-  // ☠️ Desactivar cuenta
   const handleDeactivateAccount = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to deactivate your account? You will be signed out."

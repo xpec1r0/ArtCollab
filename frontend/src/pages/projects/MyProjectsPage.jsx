@@ -18,8 +18,6 @@ import "./projects.css";
 
 const PAGE_SIZE = 12;
 
-/* ===== helpers iguales a ProjectsPage ===== */
-
 function normalizeProjectList(payload) {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
@@ -74,8 +72,6 @@ function deriveTotalProjects(payload, listLength) {
   return listLength;
 }
 
-/* ===== View toggle (grid / list) ===== */
-
 function ViewModeToggle({ value, onChange }) {
   const isListView = value === "list";
 
@@ -83,18 +79,14 @@ function ViewModeToggle({ value, onChange }) {
     <div className="projects-view-toggle" aria-label="View mode toggle">
       <button
         type="button"
-        className={`projects-view-toggle-btn ${
-          !isListView ? "is-active" : ""
-        }`}
+        className={`projects-view-toggle-btn ${!isListView ? "is-active" : ""}`}
         onClick={() => onChange("grid")}
       >
         <LayoutGrid className="projects-view-toggle-icon" />
       </button>
       <button
         type="button"
-        className={`projects-view-toggle-btn ${
-          isListView ? "is-active" : ""
-        }`}
+        className={`projects-view-toggle-btn ${isListView ? "is-active" : ""}`}
         onClick={() => onChange("list")}
       >
         <Rows3 className="projects-view-toggle-icon" />
@@ -103,15 +95,13 @@ function ViewModeToggle({ value, onChange }) {
   );
 }
 
-/* ===== Página My Projects ===== */
-
 function MyProjectsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [projects, setProjects] = useState([]);
   const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
+  const [viewMode, setViewMode] = useState("grid");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -220,8 +210,8 @@ function MyProjectsPage() {
                         <span>Start a new project</span>
                       </Button>
                       <span className="projects-live-hint">
-                        You currently own{" "}
-                        <strong>{totalProjects}</strong> project
+                        You currently own <strong>{totalProjects}</strong>{" "}
+                        project
                         {totalProjects === 1 ? "" : "s"}.
                       </span>
                     </>

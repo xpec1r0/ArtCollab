@@ -1,4 +1,3 @@
-/* ===== Layout base de la página de proyectos ===== */
 
 .projects-page {
   min-height: calc(100vh - var(--navbar-height));
@@ -18,7 +17,6 @@
   }
 }
 
-/* Contenedor interior alineado con el resto del sitio */
 .projects-inner {
   width: 100%;
   max-width: 1240px;
@@ -646,7 +644,6 @@
   height: 14px;
 }
 
-/* ===== Contenido principal (grid, estados, paginación) ===== */
 
 .projects-content {
   margin-top: 1.7rem;
@@ -678,7 +675,6 @@
   }
 }
 
-/* List view: siempre una columna */
 
 .projects-grid--list {
   grid-template-columns: minmax(0, 1fr) !important;
@@ -687,8 +683,6 @@
 .projects-list-item {
   width: 100%;
 }
-
-/* Error state */
 
 .projects-error {
   margin-bottom: 1rem;
@@ -714,8 +708,6 @@
     #fef2f2;
   color: #7f1d1d;
 }
-
-/* Skeleton loading */
 
 .projects-skeleton {
   position: relative;
@@ -774,8 +766,6 @@
   border-color: rgba(148, 163, 184, 0.7);
 }
 
-/* Empty state */
-
 .projects-empty {
   display: flex;
   flex-direction: column;
@@ -798,8 +788,6 @@
   color: var(--ac-text-muted);
 }
 
-/* Pagination */
-
 .projects-pagination {
   margin-top: 1.6rem;
   display: flex;
@@ -821,10 +809,6 @@
   gap: 0.25rem;
   font-size: 0.74rem;
 }
-
-/* ===============================
-   My Projects – tweaks específicos
-   =============================== */
 
 .my-projects-header .projects-kicker {
   color: #a5b4fc;

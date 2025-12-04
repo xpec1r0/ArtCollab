@@ -7,7 +7,6 @@ const ArtMosaicCarousel = ({ slides = [] }) => {
 
   const hasSlides = slides && slides.length > 0;
 
-  // Reset índice si cambia la cantidad de slides
   useEffect(() => {
     if (!hasSlides) return;
     if (currentIndex >= slides.length) {
@@ -34,7 +33,6 @@ const ArtMosaicCarousel = ({ slides = [] }) => {
     setModalImage(null);
   }, []);
 
-  // Cerrar modal con ESC
   useEffect(() => {
     if (!modalImage) return;
 
@@ -48,7 +46,6 @@ const ArtMosaicCarousel = ({ slides = [] }) => {
     return () => window.removeEventListener("keydown", handler);
   }, [modalImage, closeModal]);
 
-  // (Opcional) bloquear scroll del body mientras el modal está abierto
   useEffect(() => {
     if (!modalImage) return;
     const originalOverflow = document.body.style.overflow;
@@ -108,10 +105,7 @@ const ArtMosaicCarousel = ({ slides = [] }) => {
               </div>
 
               {currentSlide.columns?.map((column, colIndex) => (
-                <div
-                  className="col"
-                  key={`col-${currentSlide.id}-${colIndex}`}
-                >
+                <div className="col" key={`col-${currentSlide.id}-${colIndex}`}>
                   {column.map((imgObj, imgIndex) => (
                     <img
                       key={`${imgObj.src}-${imgIndex}`}
@@ -184,8 +178,7 @@ const ArtMosaicCarousel = ({ slides = [] }) => {
         </div>
       </div>
 
-      {/* MODAL / LIGHTBOX 
-          🔥 Ahora va FUERA del wrapper, ya no lo recorta el carrusel */}
+      {/* MODAL / LIGHTBOX */}
       {modalImage && (
         <div className="media-modal" onClick={closeModal}>
           <div

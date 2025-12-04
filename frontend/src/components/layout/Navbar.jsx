@@ -27,7 +27,6 @@ const Navbar = () => {
   const avatarUrl =
     user?.profilePicture || user?.avatarUrl || user?.profileImage || null;
 
-  // Tema: leer de localStorage / prefers-color-scheme
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -44,7 +43,7 @@ const Navbar = () => {
       "(prefers-color-scheme: dark)"
     ).matches;
 
-    const initial = prefersDark ? "dark" : "dark"; // default: dark
+    const initial = prefersDark ? "dark" : "dark";
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
@@ -62,7 +61,6 @@ const Navbar = () => {
     });
   };
 
-  // Cerrar mega-menu Explore al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -73,13 +71,11 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Cerrar dropdown & menú móvil en cambio de ruta
   useEffect(() => {
     setOpenDropdown(false);
     setMobileOpen(false);
   }, [location]);
 
-  // Lógica de scroll: ocultar/mostrar + detectar si estamos arriba de todo
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -87,9 +83,9 @@ const Navbar = () => {
 
       if (Math.abs(diff) >= 8) {
         if (currentY > 80 && diff > 0) {
-          setIsHidden(true); // bajando
+          setIsHidden(true);
         } else if (diff < 0) {
-          setIsHidden(false); // subiendo
+          setIsHidden(false);
         }
       }
 
@@ -103,7 +99,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Limpiar timeout del explore al desmontar
   useEffect(() => {
     return () => {
       if (exploreCloseTimeoutRef.current) {
@@ -112,7 +107,6 @@ const Navbar = () => {
     };
   }, []);
 
-  // Bloquear scroll cuando el menú móvil está abierto
   useEffect(() => {
     if (mobileOpen) {
       document.body.classList.add("nav-open");
@@ -147,7 +141,6 @@ const Navbar = () => {
     .filter(Boolean)
     .join(" ");
 
-  // Hover suave para Explore (delay en el cierre)
   const handleExploreEnter = () => {
     if (exploreCloseTimeoutRef.current) {
       clearTimeout(exploreCloseTimeoutRef.current);

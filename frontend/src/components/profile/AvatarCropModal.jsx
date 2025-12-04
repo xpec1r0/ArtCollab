@@ -8,17 +8,15 @@ import { getCroppedImage } from "../../util/cropImage.js";
 function AvatarCropModal({
   open,
   src,
-  kind = "avatar", // 'avatar' | 'cover'
-  coverAspect = 3 / 1, // se ajusta desde ProfileSettings según el tamaño real del cover
+  kind = "avatar",
+  coverAspect = 3 / 1,
   onClose,
-  onCropped, // (file) => Promise<void>
+  onCropped,
 }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [busy, setBusy] = useState(false);
-
-  // avatar = 1:1; cover = ratio calculado en el shell
   const aspect = kind === "cover" ? coverAspect || 3 / 1 : 1;
   const cropShape = kind === "cover" ? "rect" : "round";
 
@@ -26,7 +24,6 @@ function AvatarCropModal({
     setCroppedAreaPixels(areaPixels);
   }, []);
 
-  // Resetear estado al abrir con otra imagen
   useEffect(() => {
     if (open) {
       setCrop({ x: 0, y: 0 });
@@ -45,10 +42,8 @@ function AvatarCropModal({
     try {
       setBusy(true);
 
-      // 1) Recortamos lo que se ve en el modal → Blob
       const blob = await getCroppedImage(src, croppedAreaPixels);
 
-      // 2) Lo convertimos en File para enviarlo por FormData
       const fileName = kind === "cover" ? "profile-cover.jpg" : "avatar.jpg";
       const file = new File([blob], fileName, { type: "image/jpeg" });
 

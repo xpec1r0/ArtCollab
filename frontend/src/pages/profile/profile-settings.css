@@ -17,7 +17,6 @@
   padding-top: 48px;
 }
 
-/* Loading / error cards */
 
 .profile-settings-loading-card,
 .profile-settings-error-card {
@@ -53,15 +52,12 @@
   font-size: 0.95rem;
 }
 
-/* ================================
-   HERO: Cover + avatar estilo Facebook
-   ================================ */
 
 .profile-hero {
   max-width: 1120px;
   margin: 0 auto 72px;
   position: relative;
-  z-index: 10; /* por encima del shell, por debajo del modal */
+  z-index: 10; 
 }
 
 /* Cover */
@@ -69,7 +65,6 @@
 .profile-cover {
   position: relative;
   width: 100%;
-  /* ⚠️ MISMA RELACIÓN QUE EL CROP: 3:1 */
   aspect-ratio: 3 / 1;
   max-height: 260px;
   border-radius: var(--ac-radius-xxl);
@@ -97,13 +92,11 @@
 .profile-cover-img {
   width: 100%;
   height: 100%;
-  /* ✅ que se comporte como el preview del crop */
   object-fit: cover;
   object-position: center;
   display: block;
 }
 
-/* Placeholder cuando no hay cover */
 
 .profile-cover-empty {
   width: 100%;
@@ -115,7 +108,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  pointer-events: none; /* el click lo captura .profile-cover */
+  pointer-events: none;
   background:
     radial-gradient(circle at 0% 0%, rgba(242, 174, 70, 0.16), transparent 60%),
     radial-gradient(circle at 100% 100%, rgba(79, 70, 229, 0.18), transparent 60%),
@@ -142,7 +135,6 @@
   color: var(--ac-text-muted);
 }
 
-/* Menú mini-modal del cover */
 
 .profile-cover-menu {
   position: absolute;
@@ -183,9 +175,6 @@
   background: rgba(148, 163, 184, 0.16);
 }
 
-/* ================================
-   Avatar solapado al cover
-   ================================ */
 
 .profile-hero-avatar-slot {
   position: absolute;
@@ -243,8 +232,6 @@
   color: #e5e7eb;
 }
 
-/* Menú mini-modal del avatar */
-
 .profile-avatar-menu {
   position: absolute;
   top: 100%;
@@ -285,9 +272,6 @@
   background: rgba(148, 163, 184, 0.16);
 }
 
-/* ================================
-   MODAL DE CROP (AvatarCropModal)
-   ================================ */
 
 .profile-modal-backdrop {
   position: fixed;
@@ -388,7 +372,7 @@
   border: 1px solid var(--ac-border-subtle);
   box-shadow: var(--ac-shadow-xl);
   position: relative;
-  z-index: 1; /* por debajo del hero/avatar/menu */
+  z-index: 1;
 }
 
 :root[data-theme="light"] .profile-settings-shell {
@@ -402,7 +386,6 @@
   gap: 14px;
 }
 
-/* Título + pill username/email */
 
 .profile-shell-title-row {
   display: flex;
@@ -467,7 +450,7 @@
   color: var(--ac-text-muted);
 }
 
-/* Tabs */
+
 
 .profile-tabs-row {
   display: flex;
@@ -557,10 +540,6 @@
   margin-top: 18px;
 }
 
-/* ================================
-   Panels & cards
-   ================================ */
-
 .profile-panel {
   width: 100%;
 }
@@ -642,9 +621,6 @@
   margin-top: 4px;
 }
 
-/* ================================
-   Form rows & inputs
-   ================================ */
 
 .profile-form-row {
   display: flex;
@@ -678,7 +654,7 @@
   font-weight: 500;
 }
 
-/* Textarea */
+
 
 .profile-textarea-group {
   position: relative;
@@ -721,9 +697,6 @@
   color: var(--ac-text-muted);
 }
 
-/* ================================
-   Social grid
-   ================================ */
 
 .profile-social-grid {
   display: grid;
@@ -731,9 +704,6 @@
   gap: 10px;
 }
 
-/* ================================
-   Toggle "open to collab"
-   ================================ */
 
 .profile-toggle-row {
   display: flex;
@@ -781,9 +751,6 @@
   font-weight: 500;
 }
 
-/* ================================
-   Chips de disciplinas
-   ================================ */
 
 .profile-chips-grid {
   display: flex;
@@ -826,8 +793,6 @@
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.9);
 }
 
-/* versión light de chips */
-
 :root[data-theme="light"] .profile-chip {
   background: #f3f4f6;
   color: #4b5563;
@@ -845,9 +810,6 @@
   color: #111827;
 }
 
-/* ================================
-   Danger zone
-   ================================ */
 
 .profile-danger-btn {
   border-color: rgba(248, 113, 113, 0.8) !important;
@@ -858,9 +820,6 @@
   background: rgba(248, 113, 113, 0.12) !important;
 }
 
-/* ================================
-   Responsivo
-   ================================ */
 
 @media (max-width: 1024px) {
   .profile-panel--grid {

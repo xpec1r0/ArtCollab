@@ -20,7 +20,6 @@ const UserMenu = ({
     .filter(Boolean)
     .join(" ");
 
-  // Cerrar al hacer click fuera
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -61,7 +60,7 @@ const UserMenu = ({
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
-      {/* Trigger: solo círculo (foto o icono) */}
+      {/* Trigger */}
       <button
         type="button"
         className="user-menu-trigger"
@@ -81,7 +80,7 @@ const UserMenu = ({
         </span>
       </button>
 
-      {/* Dropdown pegado al final del navbar */}
+      {/* Dropdown */}
       {open && (
         <div className="user-menu-dropdown">
           <button

@@ -3,7 +3,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createMedia } from "../../api/media";
 import Button from "../../components/ui/Button";
-import { Loader2, UploadCloud, Image, FileText, Music2, Video } from "lucide-react";
+import {
+  Loader2,
+  UploadCloud,
+  Image,
+  FileText,
+  Music2,
+  Video,
+} from "lucide-react";
 import "./media-upload.css";
 
 const MEDIA_TYPES = [
@@ -117,7 +124,7 @@ function CreateMediaPage() {
           category,
           visibility,
           tags,
-          metadata: {}, // lo llenaremos más adelante si hace falta
+          metadata: {},
         },
         {
           onUploadProgress: (evt) => {
@@ -128,7 +135,6 @@ function CreateMediaPage() {
         }
       );
 
-      // Cuando suba, te lo llevas a la página del item o a la galería
       navigate(`/media/${media._id || media.id}`);
     } catch (err) {
       console.error("Error creating media", err);
@@ -157,7 +163,11 @@ function CreateMediaPage() {
           </div>
         </header>
 
-        <form className="media-upload-layout" onSubmit={handleSubmit} noValidate>
+        <form
+          className="media-upload-layout"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <div className="media-upload-main">
             <div className="media-upload-card">
               {formError && (

@@ -11,19 +11,13 @@ function ProtectedRoute() {
     return (
       <div className="protected-loading">
         <div className="protected-loading-spinner" />
-        <p>Cargando tu sesión de ArtCollab…</p>
+        <p>wait…</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location }}
-      />
-    );
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <Outlet />;
