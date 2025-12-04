@@ -1,0 +1,212 @@
+/* src/pages/login.css */
+
+.login-page {
+  min-height: calc(100vh - 120px);
+  padding: 3rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle overlay on top of art-page-background */
+.login-bg-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0 0, rgba(242, 174, 70, 0.08), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(79, 80, 160, 0.14), transparent 60%),
+    linear-gradient(to bottom right, rgba(5, 8, 22, 0.9), rgba(5, 8, 22, 0.98));
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  padding: 2.5rem 2.25rem 2.2rem;
+  border-radius: var(--ac-radius-xl);
+  color: var(--ac-text-main);
+}
+
+/* header */
+.login-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+
+/* small logo with gold/indigo accent */
+.login-logo-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 0%, #f2ae46, #4f50a0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 0 0 2px rgba(5, 8, 22, 0.95),
+    0 8px 18px rgba(0, 0, 0, 0.6);
+}
+
+.login-logo-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #020617;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* social section */
+.login-social {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.login-social-btn {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease,
+    transform 0.08s ease;
+}
+
+.login-social-btn:hover {
+  border-color: rgba(242, 174, 70, 0.7);
+  background: rgba(15, 23, 42, 0.98);
+  transform: translateY(-0.5px);
+}
+
+.login-social-icon {
+  font-size: 1rem;
+}
+
+.login-social-icon-apple {
+  font-size: 1rem;
+  color: #f9fafb;
+}
+
+/* divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.login-divider .line {
+  flex: 1;
+  height: 1px;
+  background: radial-gradient(
+    circle at 0 50%,
+    rgba(148, 163, 184, 0.6),
+    transparent
+  );
+}
+
+.login-divider .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #64748b;
+}
+
+/* global error alert */
+.login-alert {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  margin-bottom: 0.9rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 113, 113, 0.7);
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+  font-size: 0.78rem;
+}
+
+.login-alert-dot {
+  margin-top: 0.25rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: #fecaca;
+}
+
+/* bottom row with helper + link */
+.login-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.1rem;
+  margin-bottom: 0.3rem;
+}
+
+.login-link {
+  font-size: 0.75rem;
+  color: #facc6b;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+
+.login-link:hover {
+  color: #fef3c7;
+}
+
+/* footer text */
+.login-footer-text {
+  margin-top: 1.3rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.login-link-strong {
+  color: #facc6b;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link-strong:hover {
+  color: #fef3c7;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem 1.6rem 1.8rem;
+  }
+
+  .login-page {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .login-social {
+    grid-template-columns: 1fr;
+  }
+}

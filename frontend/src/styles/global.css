@@ -1,11 +1,64 @@
 /* src/styles/global.css */
 
-/* Altura estándar del navbar */
+/* Fonts: Inter (body) + Space Grotesk (headings) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+/* Tailwind v4 base */
+@import "tailwindcss";
+
+/* ===== ArtCollab theme tokens (dark por defecto) ===== */
 :root {
-  --navbar-height: 72px;
+  --navbar-height: 80px; /* ajustado para el navbar full-width */
+
+  /* Neutrals - DARK (default) */
+  --ac-bg: #050816;
+  --ac-bg-soft: #090b1f;
+  --ac-surface: #0f172a;
+  --ac-surface-soft: rgba(15, 23, 42, 0.96);
+  --ac-border-subtle: rgba(148, 163, 184, 0.28);
+
+  --ac-text-main: #f9fafb;
+  --ac-text-muted: #cbd5f5;
+
+  /* Secondary (purple family) */
+  --ac-secondary: #3e3157;
+  --ac-secondary-soft: #9e91b4;
+
+  /* Accents */
+  --ac-accent-primary: #f2ae46;       /* gold / amber */
+  --ac-accent-primary-soft: rgba(242, 174, 70, 0.16);
+  --ac-accent-secondary: #4f50a0;     /* indigo */
+  --ac-accent-secondary-soft: rgba(79, 80, 160, 0.2);
+
+  /* Radius & shadows */
+  --ac-radius-xl: 24px;
+  --ac-radius-xxl: 32px;
+  --ac-shadow-xl: 0 22px 60px rgba(5, 8, 22, 0.95);
 }
 
-/* Reset básico */
+/* ===== LIGHT THEME overrides (html[data-theme="light"]) ===== */
+:root[data-theme="light"] {
+  /* Neutrals - LIGHT */
+  --ac-bg: #f5f5f7;
+  --ac-bg-soft: #e5e7eb;
+  --ac-surface: #ffffff;
+  --ac-surface-soft: #f9fafb;
+  --ac-border-subtle: rgba(148, 163, 184, 0.35);
+
+  --ac-text-main: #020617;
+  --ac-text-muted: #64748b;
+
+  /* Manteniendo ADN violeta / dorado pero en claro */
+  --ac-secondary: #433362;
+  --ac-secondary-soft: #a78bfa;
+
+  --ac-accent-primary: #f97316;
+  --ac-accent-primary-soft: rgba(249, 115, 22, 0.16);
+  --ac-accent-secondary: #4f46e5;
+  --ac-accent-secondary-soft: rgba(79, 70, 229, 0.16);
+}
+
+/* Basic reset */
 *,
 *::before,
 *::after {
@@ -17,34 +70,82 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+
+  /* Ocultar scrollbar pero mantener scroll (Firefox) */
+  scrollbar-width: none;
+
+  /* Evitar rebote arriba/abajo donde se pueda */
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+
+  /* Transición suave de tema */
+  transition: background 0.25s ease, color 0.25s ease;
+  
 }
 
-/* Tipografía y colores base */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #ffffff;
-  color: #111111;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  color: var(--ac-text-main);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.10), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(79, 70, 229, 0.14), transparent 55%),
+    linear-gradient(135deg, #020617 0%, #020617 40%, #0b1220 100%);
+
+  /* Ocultar scrollbar pero mantener scroll (IE/Edge antiguo) */
+  -ms-overflow-style: none;
 }
 
-/* El root ocupa toda la pantalla y deja que el contenido crezca */
+/* Override de fondo en LIGHT theme */
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(249, 115, 22, 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(79, 70, 229, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(to bottom, #f9fafb 0%, #e5e7eb 60%, #e5e7eb 100%);
+}
+
+/* Ocultar scrollbar pero mantener scroll (Chrome, Safari, etc.) */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Cuando el menú móvil está abierto, bloqueamos scroll del body */
+body.nav-open {
+  overflow: hidden;
+}
+
+/* Root container */
 #root {
   min-height: 100vh;
 }
 
-/* Shell de la app: Navbar arriba, contenido, Footer abajo */
+/* App shell */
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* El main deja espacio para el navbar fijo */
+/* 🔹 Contenido principal con offset del navbar */
 .app-content {
   flex: 1;
-  padding-top: var(--navbar-height);
+  padding-top: calc(var(--navbar-height) - 4px);
 }
 
-/* Que nunca se desborde horizontalmente */
+/* Prevent horizontal overflow on main pages */
 .app-content,
 .homepage,
 .about-page,
@@ -56,14 +157,126 @@ body {
   overflow-x: hidden;
 }
 
-/* Links por defecto */
+/* Links */
 a {
   color: inherit;
   text-decoration: none;
 }
 
-/* Imágenes responsivas */
+/* Images */
 img {
   max-width: 100%;
   display: block;
 }
+
+/* Selection */
+::selection {
+  background-color: var(--ac-accent-secondary);
+  color: #020617;
+}
+
+/* Protected route loading state */
+.protected-loading {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--ac-text-muted);
+  font-size: 0.9rem;
+}
+
+.protected-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.65);
+  border-top-color: var(--ac-accent-primary);
+  animation: protected-spin 0.8s linear infinite;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes protected-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* High-level wrappers */
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+}
+
+/* Reusable surfaces */
+
+/* Glass panel for cards, login, etc. */
+.glass-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.98),
+    rgba(15, 23, 42, 0.94)
+  );
+  border-radius: var(--ac-radius-xl);
+  border: 1px solid var(--ac-border-subtle);
+  box-shadow: var(--ac-shadow-xl);
+  backdrop-filter: blur(18px);
+}
+
+/* Gradient border using gold + indigo */
+.gradient-border {
+  position: relative;
+  border-radius: var(--ac-radius-xl);
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(242, 174, 70, 0.95),
+    rgba(79, 80, 160, 0.9)
+  );
+  opacity: 0.55;
+  z-index: -1;
+}
+
+/* Background helper for hero-like pages (login, explore, etc.) */
+.art-page-background {
+  min-height: calc(100vh - var(--navbar-height));
+  background:
+    radial-gradient(circle at 0% 0%, rgba(242, 174, 70, 0.08) 0, transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(79, 80, 160, 0.14) 0, transparent 60%),
+    linear-gradient(to bottom, #050816 0%, #020617 40%, #020617 100%);
+}
+
+/* Versión LIGHT de ese fondo hero */
+:root[data-theme="light"] .art-page-background {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(249, 115, 22, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(79, 70, 229, 0.16),
+      transparent 60%
+    ),
+    linear-gradient(to bottom, #ffffff 0%, #e5e7eb 50%, #e5e7eb 100%);
+}
+
+/* Display utility for big headings */
+.h-display {
+  font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  letter-spacing: -0.02em;
+}
+
