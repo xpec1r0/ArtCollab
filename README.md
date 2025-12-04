@@ -1,168 +1,191 @@
 # ArtCollab
 
-ArtCollab is an online platform where artists can showcase their work, collaborate on projects, and share feedback in a supportive community. It functions as a digital gallery for paintings, photography, digital art, design, illustration, and storytelling, encouraging cross‑disciplinary creativity.
+ArtCollab is an online platform where artists can showcase their work, collaborate on projects, and share feedback in a supportive community.  
+It acts as a digital gallery and collaboration hub for illustration, painting, photography, digital art, design, storytelling, music, and hybrid disciplines.
 
 ---
 
-## Goal & MVP Scope
+## ✨ MVP Feature Set
 
-**Goal:** Deliver a working MVP (Minimum Viable Product) of ArtCollab.
+The current MVP includes:
 
-For this first version:
+- **Secure authentication**
+  - Email + password login, registration
+  - Hashed passwords with bcrypt
+  - JWT-based auth with role support (`user`, `collaborator`, `support`, `admin`)
+- **Artist profiles**
+  - Public profile with avatar, cover image, bio, tagline, location, specializations
+  - Social links (website, Instagram, X/Twitter, LinkedIn)
+  - Open‑to‑collab flag, followers / following counters
+- **Media gallery**
+  - Upload images and other files
+  - Files stored in **Cloudinary**, metadata stored in MongoDB
+  - Visibility (`public` / `private`) and status (`draft` / `published`)
+  - Categories (painting, music, design, illustration, storytelling, photography, sculpture, digital_art, other)
+  - Likes, views, collaborators
+- **Projects (collaborative work)**
+  - Project entities with owner + participants
+  - Visibility options and statuses
+  - Cover images stored via Cloudinary
+- **Feedback**
+  - Model for comments, ratings, reviews, likes, helpful flags, reports
+  - (Frontend wiring is in progress; backend is ready)
+- **Account management**
+  - Update profile & collaboration preferences
+  - Change password
+  - Deactivate account (soft‑delete `isActive`)
 
-- The focus is on **images and written content** (drawings, painting, photography, visual design, stories).
-- Audio and video can be added in future iterations.
-- Files and user data are stored in **MongoDB**.
-- Users can:
-  - Sign up / log in
-  - Request a **password reset** (via Mailtrap in development)
-  - Browse the marketing site (Home, About)
-  - Use a basic contact form (frontend only, no backend send yet)
+Email‑based password reset (Mailtrap) can be wired in when needed; the original plumbing is still present in the backend.
 
 ---
 
-## Tech Stack
+## 🧱 Tech Stack
 
 ### Frontend
 
-- **Framework:** React + Vite
-- **Routing:** React Router
-- **Styling:** Plain CSS modules per page + shared global styles
-  - `src/styles/global.css` (layout shell, navbar spacing, base resets)
-  - `src/pages/*.css` and `src/components/*.css` for page‑specific styling
-- **HTTP Client:** `fetch` or `axios` via `src/api/client.js`
-- **Notifications:** `react-hot-toast` (wired in `main.jsx`)
+- **React** + **Vite**
+- **Routing:** React Router (`src/routes/AppRouter.jsx`)
+- **State / Context:**
+  - `AuthContext` for session & current user
+  - Local component state for forms
+- **Styling:**
+  - Custom CSS, global design tokens in `src/styles/global.css`
+  - Layout shell + glassmorphism cards tuned for an artistic theme
+- **HTTP client:** Axios instance in `src/api/client.js`
+- **Notifications:** `react-hot-toast`
 
 ### Backend
 
-- **Runtime:** Node.js
+- **Runtime:** Node.js (v18+ recommended)
 - **Framework:** Express
-- **Database:** MongoDB (local or Atlas) via Mongoose
-- **Auth:**
-  - JWT (access token returned on login/register)
-  - Password hashing using `bcryptjs`
-- **Email (dev):** Nodemailer + **Mailtrap SMTP sandbox**
-  - Used to send **Forgot Password** emails
-- **Security & Middleware:**
-  - Basic auth middleware (`middleware/auth.js`)
-  - Centralized email sender (`utils/sendEmail.js`)
+- **Database:** MongoDB + Mongoose
+- **Auth & Security:**
+  - JWT (`jsonwebtoken`)
+  - Password hashing (`bcryptjs`)
+  - Role‑based authorization
+  - Basic validation middleware (express‑validator)
+- **File uploads:**
+  - `multer` (memory storage)
+  - `cloudinary` SDK
+- **Email (optional / dev):**
+  - Nodemailer + Mailtrap for password‑reset flows
 
 ---
 
-## High-Level Architecture
+## 🗂 Repository Structure
 
-The project is split into a **frontend** and a **backend** (two apps that talk over HTTP):
+This repo is a small monorepo with separate backend and frontend apps:
 
 ```text
-artcollab-frontend/   → React + Vite SPA
-artcollab-backend/    → Express + MongoDB API
+.
+├── backend/          # Express + MongoDB API
+└── frontend/         # React + Vite SPA
 ```
 
-You can run them separately in development:
+High‑level structure:
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:5001` (configurable)
+```text
+backend/
+  app.js
+  routes/
+  controllers/
+  models/
+  middleware/
+  utils/
+  .env.example
 
-The frontend calls the backend using `/api/...` endpoints (e.g. `/api/auth/login`, `/api/auth/forgot-password`, etc.).
-
----
-
-## Frontend Overview
-
-**Key files:**
-
-- `src/main.jsx` – React entry point, mounts `<App />`, global styles, toaster.
-- `src/App.jsx` – Loads the router shell.
-- `src/routes/routes.jsx` – Defines SPA routes and wraps them in the app shell (Navbar + Footer).
-- `src/styles/global.css` – Global layout (app shell, navbar height, scroll behavior).
-- `src/api/client.js` – Configured HTTP client to call the backend API.
-- `src/components/navbar.jsx` / `navbar.css` – Top navigation bar (Explore mega menu, logo, auth buttons).
-- `src/components/footer.jsx` / `footer.css` – Site footer.
-- `src/pages/homepage.jsx` / `homepage.css` – Hero, category cards, slideshow, quote typing animation, contact form.
-- `src/pages/about.jsx` / `about.css` – “Our Vision” and “Our Mission” sections.
-- `src/pages/login.jsx` / `login.css` – Login form, calls `/api/auth/login`.
-- `src/pages/SignUp.jsx` / `signup.css` – Sign up form, calls `/api/auth/register`.
-- `src/pages/forgotPassword.jsx` / `forgotPassword.css` – Forgot password form, calls `/api/auth/forgot-password`.
-- `src/pages/resetPassword.jsx` / `resetPassword.css` – Reset password form, consumes the token from the URL and calls `/api/auth/reset-password`.
-
----
-
-## Backend Overview
-
-**Key backend files:**
-
-- `app.js` – Express app entry point (loads routes, middleware, DB config).
-- `config/database.js` – MongoDB connection.
-- `models/User.js` – User schema (auth fields, reset token fields, helpers).
-- `controllers/authController.js` – Register, login, `getMe`, `forgotPassword`, `resetPassword`.
-- `routes/auth.js` – `/api/auth/...` routes.
-- `middleware/auth.js` – JWT protection middleware.
-- `utils/sendEmail.js` – Reusable email sender using Nodemailer + Mailtrap.
-
-Additional resources exist for future features (`Project`, `Media`, `Feedback` controllers/models/routes), but the core auth and password reset flow are already functional.
+frontend/
+  index.html
+  vite.config.js
+  src/
+    api/
+    app/
+    components/
+    context/
+    pages/
+    routes/
+    styles/
+    util/
+```
 
 ---
 
-## Running the Backend Locally
+## ⚙️ Backend Setup
 
-### 1. Prerequisites
+### 1. Requirements
 
-- Node.js (v18+ recommended)
-- npm or yarn
-- A running MongoDB instance:
-  - Local: `mongodb://127.0.0.1:27017/artcollab`, or
-  - MongoDB Atlas connection string
+- Node.js **v18+**
+- npm (or yarn)
+- A MongoDB instance:
+  - Local MongoDB (e.g. `mongodb://127.0.0.1:27017/artcollab`)
+  - or MongoDB Atlas
 
 ### 2. Install dependencies
 
-From the backend folder:
+From the repo root:
 
 ```bash
 cd backend
 npm install
 ```
 
-### 3. Environment variables (`.env`)
+### 3. Configure environment variables
 
-Create a `.env` file in the backend root with values similar to:
+Use the example file as a base:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Then edit `.env` with your values. A typical configuration for local development looks like:
 
 ```env
 NODE_ENV=development
 PORT=5001
 
+# MongoDB
 MONGO_URI=mongodb://127.0.0.1:27017/artcollab
 
+# JWT auth
 JWT_SECRET=replace_with_a_long_random_string
 JWT_EXPIRE=7d
-
 BCRYPT_ROUNDS=12
 
-# URL where the frontend runs in development
+# Frontend URL (CORS, cookies, etc.)
 FRONTEND_URL=http://localhost:5173
 
-# Mailtrap SMTP (dev only)
+# Cloudinary configuration (required for media uploads)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+# Optional: base folder where uploaded files will be stored
+CLOUDINARY_UPLOAD_FOLDER=artcollab_media
+
+# Mailtrap / SMTP (optional, for password reset emails)
 MAIL_HOST=sandbox.smtp.mailtrap.io
 MAIL_PORT=2525
-MAIL_USER=YOUR_MAILTRAP_USERNAME
-MAIL_PASS=YOUR_MAILTRAP_PASSWORD
+MAIL_USER=your_mailtrap_username
+MAIL_PASS=your_mailtrap_password
 MAIL_FROM="ArtCollab <no-reply@artcollab.test>"
 ```
 
-> 🔐 **Important:**  
-> - Do **not** commit the `.env` file to Git.  
-> - Replace `YOUR_MAILTRAP_USERNAME` and `YOUR_MAILTRAP_PASSWORD` with the SMTP credentials from your Mailtrap “Email Testing” inbox.
+> 🔐 **Important**
+>
+> - Never commit `.env` to the repository.
+> - Check `backend/.env.example` for the most up‑to‑date list of variables.
 
 ### 4. Start the backend
 
-Depending on your `package.json` scripts, something like:
+From `backend/`:
 
 ```bash
-npm run dev   # if using nodemon
+npm run dev   # usually starts nodemon app.js
 # or
-npm start     # if dev/start are set differently
+npm start     # depending on the scripts in package.json
 ```
 
-The API should now be available at:
+By default the API is available at:
 
 ```text
 http://localhost:5001/api
@@ -170,44 +193,249 @@ http://localhost:5001/api
 
 ---
 
-## Running the Frontend Locally
+## 🧠 Backend: Key Modules & Concepts
 
-### 1. Prerequisites
+### Models
 
-- Node.js (v18+ recommended)
-- npm or yarn
+#### `User`
+
+Located at `backend/models/User.js`.
+
+Key fields:
+
+- `email`, `username`, `password`
+- `role` – one of `user | collaborator | support | admin`
+- Profile fields: `firstName`, `lastName`, `bio`, `tagline`, `location`
+- Collaboration / discovery: `openToCollab`, `specializations[]`, `socialLinks`
+- Avatar & cover: `profilePicture`, `coverImage` (Cloudinary URLs)
+- Social: `followers[]`, `following[]`
+- Auth: `isActive`, `isVerified`, `lastLogin`, `refreshTokens[]`
+- Password & email verification fields for reset flows
+
+Important methods:
+
+- `matchPassword(plainText)` → compares a plain text password with the hashed one.
+- `getSignedJwtToken()` → creates a signed JWT payload `{ id, email, username, role }`.
+- `getPublicProfile()` → returns a safe, public‑facing snapshot (no passwords/tokens).
+
+#### `Media`
+
+Located at `backend/models/Media.js` (simplified summary):
+
+- Basic fields:
+  - `title`, `description`
+  - `mediaType` – e.g. `image`, `audio`, `video`, `document`
+  - `category` – values like `painting`, `music`, `design`, `illustration`, `storytelling`, `photography`, `sculpture`, `digital_art`, `other`
+- Cloudinary integration:
+  - `fileName`, `originalName`, `fileSize`, `mimeType`
+  - `cloudUrl` – original file URL in Cloudinary
+  - `thumbnailUrl` – transformed URL for previews
+  - `cloudinaryPublicId`, `cloudinaryResourceType`
+- Ownership & visibility:
+  - `owner` – reference to `User`
+  - `collaborators` – array of `{ user, role }`
+  - `visibility` – `public` or `private`
+  - `status` – `draft`, `published`, etc.
+- Engagement:
+  - `views`, `likes[]`, `likeCount`
+
+Helper methods (defined on the schema):
+
+- `canView(userId)` – checks if a given user can see the media.
+- `canEdit(userId)` – checks if a given user can edit it.
+- `incrementViews()` – increments the view counter safely.
+- `addLike(userId)`, `removeLike(userId)` – toggle likes.
+
+#### `Project` and `Feedback`
+
+- `Project` – collaborative entities with:
+  - `owner`, `participants[]` (with roles & statuses)
+  - `title`, `description`, `category`, `status`, `visibility`
+  - optional `coverImage` (Cloudinary URL) & metadata
+- `Feedback` – comments, ratings, reactions, reports, linked to media or projects.
+
+### Controllers & Routes
+
+Only the most relevant ones:
+
+- `routes/auth.js` – login, register, current user, etc.
+- `routes/users.js` – profile, preferences, follow, stats.
+- `routes/media.js` – media gallery, upload, like, collaborators, categories.
+- `routes/projects.js` – project CRUD and collaboration endpoints.
+- `routes/feedback.js` – feedback creation and moderation.
+
+All routes are mounted from `backend/app.js` under the `/api` prefix, e.g.:
+
+```text
+GET    /api/media
+POST   /api/media
+GET    /api/media/:id
+POST   /api/media/:id/like
+POST   /api/media/:id/collaborators
+...
+GET    /api/users
+GET    /api/users/me
+PATCH  /api/users/me/profile
+PATCH  /api/users/me/password
+DELETE /api/users/me
+...
+```
+
+### Middleware
+
+- `middleware/auth.js`
+  - Parses the JWT (from header or cookies, depending on the implementation).
+  - Attaches the authenticated `user` to `req.user`.
+  - Used to protect private routes.
+- `middleware/roles.js`
+  - Small helper to require specific roles (e.g. admin/support only).
+- `middleware/upload.js`
+  - Configures `multer` with memory storage.
+  - Restricts max file size and accepted mime types.
+  - Used for `POST /api/media` and specific upload endpoints.
+
+### Cloudinary Utils
+
+`backend/utils/cloudinary.js` exposes:
+
+- The configured `cloudinary` instance.
+- `uploadBuffer(buffer, options)` – uploads an in‑memory file buffer to Cloudinary, returns the Cloudinary response (including `public_id`, `secure_url`, and `resource_type`).
+- `deleteFromCloudinary(publicId, resourceType)` – deletes a resource by public ID.
+
+These helpers are used inside `mediaController` and upload endpoints.
+
+---
+
+## ☁️ Media Uploads & Cloudinary (How It Works)
+
+### 1. Configure Cloudinary
+
+1. Create a free account at https://cloudinary.com.
+2. Go to your **Dashboard** and copy:
+   - Cloud Name
+   - API Key
+   - API Secret
+3. Add them to `backend/.env`:
+
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   CLOUDINARY_UPLOAD_FOLDER=artcollab_media
+   ```
+
+4. Restart the backend after changing `.env`.
+
+### 2. Upload flow (generic media)
+
+Endpoint: `POST /api/media`  
+Access: **Private** (authenticated)
+
+- The route uses `multer` (`upload.single('file')`) to read the file from the `form-data` body.
+- The controller (`createMedia`) determines the Cloudinary `resource_type` from `file.mimetype`:
+  - `image/*` → `image`
+  - `video/*` → `video`
+  - everything else → `raw`
+- Then it calls:
+
+  ```js
+  const uploadResult = await uploadBuffer(file.buffer, {
+    folder: `${process.env.CLOUDINARY_UPLOAD_FOLDER || "artcollab_media"}/${
+      category || "uncategorized"
+    }`,
+    resourceType,
+  });
+  ```
+
+- For images, it also generates a `thumbnailUrl` using Cloudinary transforms (e.g. 400×400 crop).
+- It saves a `Media` document with:
+  - `cloudUrl` (original)
+  - `thumbnailUrl`
+  - `cloudinaryPublicId`
+  - `cloudinaryResourceType`
+  - plus all other metadata (title, description, tags, etc.).
+
+#### Example `curl` upload
+
+```bash
+curl -X POST http://localhost:5001/api/media   -H "Authorization: Bearer <YOUR_JWT_TOKEN>"   -F "file=@/path/to/your-image.jpg"   -F "title=Test piece"   -F "description=Uploaded via curl"   -F "mediaType=image"   -F "category=painting"   -F "visibility=public"
+```
+
+### 3. Profile avatars & covers
+
+For the profile settings UI, the frontend:
+
+1. Lets the user pick an image (avatar or cover).
+2. Opens a crop modal (`AvatarCropModal`) and lets the user crop/zoom.
+3. Uses a utility `getCroppedImage` to turn the crop into a **new JPEG file**.
+4. Calls `uploadProfileImage(file, { kind: 'avatar' | 'cover' })` from `src/api/uploads.js`.
+
+`uploadProfileImage` is a small wrapper that internally uses the same `POST /api/media` endpoint and tags uploads with:
+
+```js
+metadata: {
+  usage: 'profile',
+  kind: 'avatar' // or 'cover'
+}
+```
+
+From the API response, the frontend picks the most appropriate URL (usually `thumbnailUrl` for avatars and the main `secureUrl` for covers) and stores it in the user profile via:
+
+```ts
+PATCH /api/users/me/profile
+{
+  profilePicture: "<url from Cloudinary>",
+  coverImage: "<url from Cloudinary>",
+  ...
+}
+```
+
+So Cloudinary is the **only** place where binary files live; the database stores just URLs + metadata.
+
+---
+
+## 🖥 Frontend Setup
+
+### 1. Requirements
+
+- Node.js **v18+**
+- npm (or yarn)
 
 ### 2. Install dependencies
 
-From the frontend folder:
+From the repo root:
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 3. Configure API base URL (if needed)
+### 3. Frontend environment variables
 
-In `src/api/client.js` you typically configure the base URL to point to the backend:
-
-```js
-// Example client.js (simplified)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
-```
-
-Then in a `.env` file for the frontend (e.g. `.env.development.local`):
+Create a `.env` or `.env.local` file inside `frontend/` (if you don’t already have one). At minimum:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5001/api
 ```
 
-### 4. Start the dev server
+The `src/api/client.js` file reads this and configures Axios:
+
+```js
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
+```
+
+If you change the backend port or mount path, make sure to update this value.
+
+### 4. Start the frontend dev server
+
+From `frontend/`:
 
 ```bash
 npm run dev
 ```
 
-The frontend should now be available at:
+By default Vite serves the app on:
 
 ```text
 http://localhost:5173
@@ -215,123 +443,190 @@ http://localhost:5173
 
 ---
 
-## Password Reset Flow (Mailtrap Integration)
+## 🧩 Frontend Structure & Key Pieces
 
-The app implements a **realistic password reset flow** using Mailtrap in development. This allows you to test emails without sending anything to real inboxes.
+High‑level structure (simplified):
 
-### Backend flow
+```text
+frontend/src/
+  api/
+    client.js        # axios instance
+    auth.js          # login, register, me, logout
+    users.js         # profile & preferences
+    media.js         # media CRUD & likes
+    projects.js      # project endpoints
+    uploads.js       # helpers for profile uploads, etc.
 
-1. **Forgot Password (request link)**  
-   - Endpoint: `POST /api/auth/forgot-password`  
-   - Body: `{ "email": "user@example.com" }`
-   - Steps:
-     - Look up the user by email.
-     - Generate a secure random token and store:
-       - `resetPasswordToken`
-       - `resetPasswordExpire` (e.g. 1 hour from now)
-     - Build a URL pointing to the frontend, e.g.  
-       `http://localhost:5173/reset-password?token=<RESET_TOKEN>`
-     - Send an email using `utils/sendEmail.js` and the Mailtrap SMTP credentials.
+  app/
+    AppShell.jsx     # main authenticated app layout (sidebar/topbar if used)
+    ...
 
-2. **Reset Password (actually change it)**  
-   - Endpoint: `POST /api/auth/reset-password`  
-   - Body: `{ "token": "<RESET_TOKEN>", "password": "newPassword123" }`
-   - Steps:
-     - Validate token and expiry.
-     - Hash the new password and save it on the user.
-     - Clear `resetPasswordToken` and `resetPasswordExpire`.
-     - Optionally, respond with a success message so the user can log in again.
+  components/
+    layout/          # navbar, footer, layout pieces
+    profile/         # profile header, settings components, AvatarCropModal, etc.
+    project/         # project cards, lists
+    media/           # media cards, grids, filters
+    ui/              # Button, TextField, inputs, reusable primitives
+    ProtectedRoute.jsx
 
-### Frontend flow
+  context/
+    AuthContext.jsx  # provides user, login, logout, refreshUser, etc.
 
-- **ForgotPassword page (`/forgot-password`)**
-  - Simple form that sends `email` to `POST /api/auth/forgot-password`.
-  - On success, shows a message like:  
-    _“If this email is registered, a password reset link has been sent.”_
+  pages/
+    marketing/
+      HomePage.jsx
+      AboutPage.jsx
+      ...
+    auth/
+      LoginPage.jsx
+      RegisterPage.jsx
+      ForgotPasswordPage.jsx
+      ResetPasswordPage.jsx
+    profile/
+      ProfileSettings.jsx
+      ...
+    media/
+      MediaGalleryPage.jsx
+      MediaDetailPage.jsx
+    projects/
+      ProjectsPage.jsx
+      ProjectDetailPage.jsx
 
-- **ResetPassword page (`/reset-password`)**
-  - Reads the `token` from the URL query string.
-  - Shows a form to enter the new password (and confirmation, if desired).
-  - Calls `POST /api/auth/reset-password` with `{ token, password }`.
-  - On success, shows a success message and optionally redirects to `/login`.
+  routes/
+    AppRouter.jsx     # all routes (public + private)
 
-### Using Mailtrap in development
+  styles/
+    global.css        # global tokens, typography, app shell, theme
 
-1. Create a free Mailtrap account.
-2. Go to **Email Testing → Inboxes → SMTP Settings**.
-3. Copy the SMTP credentials (host, port, username, password).
-4. Paste them into your backend `.env` as:
+  util/
+    cropImage.js      # takes an image + crop area and returns a Blob/File
+```
 
-   ```env
-   MAIL_HOST=sandbox.smtp.mailtrap.io
-   MAIL_PORT=2525
-   MAIL_USER=xxxxxxxxxxxxxx
-   MAIL_PASS=xxxxxxxxxxxxxx
-   MAIL_FROM="ArtCollab <no-reply@artcollab.test>"
+### Routing & Auth
+
+- `AppRouter.jsx` defines:
+  - Public routes (marketing pages, login, register, forgot/reset)
+  - Private routes (dashboard, profile, media, projects) wrapped in `ProtectedRoute`.
+- `AuthContext`:
+  - Holds the current `user` object (from `/api/auth/me` or `/api/users/me`).
+  - Exposes helpers: `login`, `logout`, `refreshUser`, etc.
+  - Ensures that authenticated areas of the app only render when the session is valid.
+
+### Profile Settings UI
+
+- `pages/profile/ProfileSettings.jsx`:
+  - Three main tabs:
+    - **Public profile** (avatar, cover, bio, tagline, location, social links)
+    - **Collaboration preferences** (openToCollab, disciplines, region)
+    - **Security & account** (change password, deactivate account)
+  - Uses:
+    - `getMyProfile`, `updateMyProfile`, `updateMyPassword`, `deactivateMyAccount`
+    - `uploadProfileImage` for avatar/cover uploads
+    - `AvatarCropModal` + `cropImage.js` for cropping
+
+---
+
+## 🔐 Password Management
+
+Even though the UI is currently more focused on profile & media, the backend supports:
+
+- `PATCH /api/users/me/password`
+  - Body: `{ currentPassword, newPassword }`
+  - Validates the current password and updates it atomically.
+- `DELETE /api/users/me`
+  - Soft‑deactivates the account (`isActive = false`) and clears refresh tokens.
+
+For a full forgot/reset flow with emails, you can use the existing Mailtrap configuration and wire:
+
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
+
+and corresponding pages under `pages/auth/`.
+
+---
+
+## 🧪 Local Development Workflow (TL;DR)
+
+1. **Clone the repo**
+
+   ```bash
+   git clone <repo-url>
+   cd <repo-folder>
    ```
 
-5. Trigger a password reset from the frontend.
-6. Open your Mailtrap inbox:
-   - You should see the **reset password email**.
-   - Click the link in the email → it will open your local frontend `/reset-password` page with the token already attached.
+2. **Backend**
 
-This approach is safe for local development and behaves very similarly to a production email flow.
+   ```bash
+   cd backend
+   cp .env.example .env        # edit it with Mongo, Cloudinary, JWT, Mailtrap
+   npm install
+   npm run dev
+   ```
 
----
+   Backend runs on `http://localhost:5001`.
 
-## Current Frontend Pages
+3. **Frontend**
 
-- `/` or `/homepage` – **Homepage**: hero, category cards, slideshow, quote, contact form.
-- `/about` – **About**: “Our Vision” + three mission cards.
-- `/login` – **Login** (email + password).
-- `/signup` – **Sign Up** (username, email, password, optional profile fields).
-- `/forgot-password` – Request reset link.
-- `/reset-password` – Set new password using token from email.
+   ```bash
+   cd ../frontend
+   # create .env (if needed)
+   echo "VITE_API_BASE_URL=http://localhost:5001/api" > .env
+   npm install
+   npm run dev
+   ```
 
-The **Navbar** and **Footer** are shared across pages using the `app-shell` layout:
+   Frontend runs on `http://localhost:5173`.
 
-- Navbar fixed at the top via `--navbar-height` CSS variable.
-- Main content wrapped in `.app-content` with padding to avoid being hidden behind the navbar.
-- Footer sticks to the bottom when content is short.
+4. **Try it out**
 
----
-
-## Roadmap Ideas
-
-Future improvements and iterations might include:
-
-- Artist profile pages with portfolios.
-- Project boards for collaborative work.
-- Richer feedback system (critiques, ratings, threaded comments).
-- Support for audio and video uploads.
-- Production‑grade email provider (SendGrid, SES, etc.) replacing Mailtrap.
+   - Open `http://localhost:5173`
+   - Sign up → log in
+   - Go to **Profile Settings**
+   - Upload an avatar & cover (cropping should work)
+   - Create and browse media items once the gallery UI is wired
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-1. Fork the repository.
-2. Create a feature branch:
+If you’re collaborating on this project:
+
+1. Create a feature branch from the main dev branch:
+
    ```bash
    git checkout -b feature/my-new-feature
    ```
-3. Commit your changes:
+
+2. Make your changes in `backend/` and/or `frontend/`.
+3. Run the backend and frontend locally and verify:
+   - Auth still works
+   - Profile update works
+   - Uploads/media & Cloudinary still work
+4. Commit with a clear message:
+
    ```bash
-   git commit -m "Add my new feature"
+   git commit -m "feat: short description of the change"
    ```
-4. Push the branch and open a Pull Request.
+
+5. Push and open a Pull Request.
 
 ---
 
-If you are setting this up for the first time, the quickest way to see it running is:
+## 📌 Summary
 
-1. Start **MongoDB**.
-2. Configure `.env` in the backend (including Mailtrap).
-3. Run the backend (`npm run dev`).
-4. Run the frontend (`npm run dev`).
-5. Open `http://localhost:5173` and try:
-   - Sign up
-   - Log in
-   - Forgot password → check Mailtrap → reset password.
+- **MongoDB** stores users, media, projects, feedback, and relationships.
+- **Cloudinary** stores all binary media (avatars, covers, artworks).
+- **Express + JWT** secure the API with roles.
+- **React + Vite** power a modern, artistic UI with profile & collaboration features.
 
-Enjoy building with ArtCollab ✨
+Once you have MongoDB, Cloudinary, and Mailtrap (optional) configured in `.env`, you should be able to run:
+
+```bash
+# backend
+cd backend && npm install && npm run dev
+
+# frontend
+cd frontend && npm install && npm run dev
+```
+
+…and start collaborating visually with ArtCollab. 🎨
