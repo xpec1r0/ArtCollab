@@ -280,7 +280,6 @@ const changePassword = async (req, res) => {
     }
 
     user.password = newPassword;
-    // opcional: invalidar sesiones/refresh tokens antiguos
     user.refreshTokens = [];
     await user.save();
 

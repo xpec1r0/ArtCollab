@@ -188,7 +188,6 @@ const createMedia = async (req, res) => {
       resourceType = "raw";
     }
 
-    // Subir a Cloudinary
     uploadResult = await uploadBuffer(file.buffer, {
       folder: `${process.env.CLOUDINARY_UPLOAD_FOLDER || "artcollab_media"}/${
         category || "uncategorized"
@@ -199,7 +198,6 @@ const createMedia = async (req, res) => {
     const cloudUrl = uploadResult.secure_url || uploadResult.url;
     let thumbnailUrl = "";
 
-    // Si es imagen, generamos URL de thumbnail optimizada
     if (uploadResult.resource_type === "image") {
       thumbnailUrl = cloudinary.url(uploadResult.public_id, {
         width: 400,
@@ -244,7 +242,6 @@ const createMedia = async (req, res) => {
   } catch (error) {
     console.error("Create media error:", error);
 
-    // Si falló después de subir a Cloudinary, limpiamos el archivo remoto
     if (uploadResult && uploadResult.public_id) {
       try {
         await deleteFromCloudinary(
@@ -352,7 +349,6 @@ const deleteMedia = async (req, res) => {
         );
       } catch (cloudErr) {
         console.error("Cloudinary delete error:", cloudErr);
-        // No bloqueamos el borrado local por error en Cloudinary
       }
     }
 
@@ -379,7 +375,6 @@ const deleteMedia = async (req, res) => {
 const uploadProfileImage = async (req, res) => {
   try {
     const file = req.file;
-    // 'avatar' | 'cover'
     const kind = req.body.kind === "cover" ? "cover" : "avatar";
 
     if (!file) {
@@ -399,8 +394,6 @@ const uploadProfileImage = async (req, res) => {
     const folderBase =
       process.env.CLOUDINARY_UPLOAD_FOLDER || "artcollab_media";
     const subFolder = kind === "cover" ? "profile_covers" : "avatars";
-
-    // Sube el blob recortado desde el front
     const uploadResult = await uploadBuffer(file.buffer, {
       folder: `${folderBase}/${subFolder}`,
       resourceType: "image",
@@ -408,10 +401,8 @@ const uploadProfileImage = async (req, res) => {
 
     const secureUrl = uploadResult.secure_url || uploadResult.url;
 
-    // 👇 Esta será la URL que mandamos al frontend
     let url = secureUrl;
 
-    // Para AVATAR sí generamos miniatura cuadrada (400x400)
     if (kind === "avatar") {
       url = cloudinary.url(uploadResult.public_id, {
         width: 400,
@@ -424,33 +415,30 @@ const uploadProfileImage = async (req, res) => {
       });
     }
 
-    // Guardamos opcionalmente como Media (por si lo quieres en la galería)
     const media = await Media.create({
       title: kind === "avatar" ? "Profile avatar" : "Profile cover",
       description:
         kind === "avatar" ? "User profile avatar" : "User profile cover image",
       mediaType: "image",
-      category: "other", // 👈 compatible con el enum del modelo Media
+      category: "other",
       fileName: uploadResult.public_id,
       originalName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
-      cloudUrl: secureUrl, // original subido
-      thumbnailUrl: url, // lo que realmente usas como avatar/cover
+      cloudUrl: secureUrl,
+      thumbnailUrl: url,
       cloudinaryPublicId: uploadResult.public_id,
       cloudinaryResourceType: uploadResult.resource_type || "image",
       owner: req.user._id,
       visibility: "private",
-      metadata: { kind }, // 'avatar' | 'cover'
+      metadata: { kind },
     });
 
-    // 🔹 Actualizar directamente el usuario (profilePicture / coverImage)
     const user = await User.findById(req.user._id);
     if (user) {
       if (kind === "avatar") {
         user.profilePicture = url;
       } else {
-        // asegúrate de tener coverImage en el schema del User
         user.coverImage = url;
       }
       await user.save();
@@ -459,7 +447,7 @@ const uploadProfileImage = async (req, res) => {
     return res.status(201).json({
       success: true,
       media,
-      url, // 👈 ESTA es la que usas en front como profilePicture / coverImage
+      url,
     });
   } catch (error) {
     console.error("Upload profile image error:", error);
@@ -685,7 +673,6 @@ const uploadProjectCover = async (req, res) => {
       });
     }
 
-    // Solo aceptamos imágenes para cover
     if (!file.mimetype.startsWith("image/")) {
       return res.status(400).json({
         success: false,
@@ -696,7 +683,6 @@ const uploadProjectCover = async (req, res) => {
     const folderBase =
       process.env.CLOUDINARY_UPLOAD_FOLDER || "artcollab_media";
 
-    // Subimos a Cloudinary usando el helper genérico
     const uploadResult = await uploadBuffer(file.buffer, {
       folder: `${folderBase}/project_covers`,
       resourceType: "image",
@@ -704,7 +690,6 @@ const uploadProjectCover = async (req, res) => {
 
     const secureUrl = uploadResult.secure_url || uploadResult.url;
 
-    // Thumbnail (por si lo quieres más adelante)
     const thumbnailUrl = cloudinary.url(uploadResult.public_id, {
       width: 800,
       height: 450,

@@ -33,10 +33,8 @@ router.get("/:id", validateObjectId("id"), optionalAuth, getMediaItem);
 // Covers de proyectos
 router.post("/projects/cover", protect, uploadSingleMedia, uploadProjectCover);
 
-// Media general
 router.post("/", protect, uploadSingleMedia, validateMediaUpload, createMedia);
 
-// Avatar / cover de perfil
 router.post("/profile-image", protect, uploadSingleMedia, uploadProfileImage);
 
 router.put("/:id", validateObjectId("id"), protect, updateMedia);

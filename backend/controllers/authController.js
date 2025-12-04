@@ -18,7 +18,6 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // ¿Email ya existe?
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({
@@ -27,7 +26,6 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // ¿Username ya existe?
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
       return res.status(400).json({
@@ -36,13 +34,10 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Creamos usuario
     const user = await User.create({
       username,
       email,
       password,
-      // Como tu esquema original pedía firstName/lastName,
-      // aquí les ponemos algo razonable
       firstName: firstName || username,
       lastName: lastName || "",
     });
@@ -121,7 +116,6 @@ exports.forgotPassword = async (req, res, next) => {
 
     const user = await User.findOne({ email });
 
-    // No revelamos si existe o no (buena práctica)
     if (!user) {
       return res.json({
         success: true,
@@ -130,10 +124,8 @@ exports.forgotPassword = async (req, res, next) => {
       });
     }
 
-    // 1) Generar token aleatorio
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    // 2) Guardar hash del token + expiración (1h)
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
@@ -144,7 +136,6 @@ exports.forgotPassword = async (req, res, next) => {
 
     await user.save({ validateBeforeSave: false });
 
-    // 3) URL de reset hacia el frontend
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     const html = `
@@ -186,10 +177,7 @@ exports.resetPassword = async (req, res, next) => {
       });
     }
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
@@ -203,8 +191,6 @@ exports.resetPassword = async (req, res, next) => {
       });
     }
 
-    // 👉 Importante: solo asignamos la nueva password.
-    // El pre-save hook de User se encarga de hashearla.
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;

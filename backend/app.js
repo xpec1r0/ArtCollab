@@ -21,10 +21,8 @@ app.use(
   })
 );
 
-// URL del frontend (para CORS)
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// 🔐 CORS (dev y prod alineados para credenciales)
 if (process.env.NODE_ENV === "development") {
   app.use(
     cors({
@@ -51,23 +49,20 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
-// 🍪 Cookies (para poder leer JWT desde req.cookies)
 app.use(cookieParser());
 
-// Body parsers
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 min
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10),
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use("/api", limiter);
 
-// Logger simple
 app.use((req, res, next) => {
   console.log(
     `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - IP: ${
@@ -77,7 +72,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Healthcheck
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     ok: true,
@@ -87,7 +81,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Rutas principales
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/media", require("./routes/media"));
@@ -102,7 +95,6 @@ app.use((req, res) => {
   });
 });
 
-// Manejo global de errores
 app.use((err, req, res, next) => {
   console.error("🔥 Error global:", err);
 

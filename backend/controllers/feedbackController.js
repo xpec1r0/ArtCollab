@@ -1,9 +1,9 @@
 // backend/controllers/feedbackController.js
-const Feedback = require('../models/Feedback');
-const Media = require('../models/Media');
-const Project = require('../models/Project');
-const User = require('../models/User');
-const mongoose = require('mongoose');
+const Feedback = require("../models/Feedback");
+const Media = require("../models/Media");
+const Project = require("../models/Project");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
 // @desc    Get feedback for a target (media, project, or user)
 // @route   GET /api/feedback
@@ -18,7 +18,7 @@ const getFeedback = async (req, res) => {
     if (!targetId || !targetType) {
       return res.status(400).json({
         success: false,
-        error: 'targetId and targetType are required'
+        error: "targetId and targetType are required",
       });
     }
 
@@ -27,7 +27,7 @@ const getFeedback = async (req, res) => {
       targetId,
       targetType,
       isDeleted: false,
-      visibility: 'public'
+      visibility: "public",
     };
 
     // Filter by feedback type
@@ -36,31 +36,31 @@ const getFeedback = async (req, res) => {
     }
 
     // Only show top-level feedback (no replies) by default
-    if (req.query.includeReplies !== 'true') {
+    if (req.query.includeReplies !== "true") {
       query.parentFeedback = null;
     }
 
     // Sort options
     let sortBy = {};
     if (req.query.sort) {
-      const sortField = req.query.sort.startsWith('-')
+      const sortField = req.query.sort.startsWith("-")
         ? req.query.sort.slice(1)
         : req.query.sort;
-      const sortOrder = req.query.sort.startsWith('-') ? -1 : 1;
+      const sortOrder = req.query.sort.startsWith("-") ? -1 : 1;
       sortBy[sortField] = sortOrder;
     } else {
-      sortBy.createdAt = -1; // Default sort by newest
+      sortBy.createdAt = -1;
     }
 
     const feedback = await Feedback.find(query)
-      .populate('author', 'firstName lastName username profilePicture')
-      .populate('parentFeedback', 'author content')
+      .populate("author", "firstName lastName username profilePicture")
+      .populate("parentFeedback", "author content")
       .populate({
-        path: 'replies',
+        path: "replies",
         populate: {
-          path: 'author',
-          select: 'firstName lastName username profilePicture'
-        }
+          path: "author",
+          select: "firstName lastName username profilePicture",
+        },
       })
       .sort(sortBy)
       .limit(limit)
@@ -73,20 +73,20 @@ const getFeedback = async (req, res) => {
       totalPages: Math.ceil(total / limit),
       totalFeedback: total,
       hasNext: page < Math.ceil(total / limit),
-      hasPrev: page > 1
+      hasPrev: page > 1,
     };
 
     res.status(200).json({
       success: true,
       count: feedback.length,
       pagination,
-      feedback
+      feedback,
     });
   } catch (error) {
-    console.error('Get feedback error:', error);
+    console.error("Get feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -97,20 +97,20 @@ const getFeedback = async (req, res) => {
 const getFeedbackItem = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id)
-      .populate('author', 'firstName lastName username profilePicture')
-      .populate('parentFeedback', 'author content')
+      .populate("author", "firstName lastName username profilePicture")
+      .populate("parentFeedback", "author content")
       .populate({
-        path: 'replies',
+        path: "replies",
         populate: {
-          path: 'author',
-          select: 'firstName lastName username profilePicture'
-        }
+          path: "author",
+          select: "firstName lastName username profilePicture",
+        },
       });
 
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
@@ -119,19 +119,19 @@ const getFeedbackItem = async (req, res) => {
     if (!feedback.canView(currentUser)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this feedback'
+        error: "Not authorized to view this feedback",
       });
     }
 
     res.status(200).json({
       success: true,
-      feedback
+      feedback,
     });
   } catch (error) {
-    console.error('Get feedback item error:', error);
+    console.error("Get feedback item error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -147,23 +147,23 @@ const createFeedback = async (req, res) => {
       feedbackType,
       content,
       rating,
-      parentFeedback
+      parentFeedback,
     } = req.body;
 
     // Verify target exists and user can access it
     let target;
-    if (targetType === 'Media') {
+    if (targetType === "Media") {
       target = await Media.findById(targetId);
-    } else if (targetType === 'Project') {
+    } else if (targetType === "Project") {
       target = await Project.findById(targetId);
-    } else if (targetType === 'User') {
+    } else if (targetType === "User") {
       target = await User.findById(targetId);
     }
 
     if (!target) {
       return res.status(404).json({
         success: false,
-        error: 'Target not found'
+        error: "Target not found",
       });
     }
 
@@ -171,17 +171,20 @@ const createFeedback = async (req, res) => {
     if (target.canView && !target.canView(req.user._id)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to leave feedback on this item'
+        error: "Not authorized to leave feedback on this item",
       });
     }
 
     // If this is a reply, verify parent feedback exists
     if (parentFeedback) {
       const parentFeedbackItem = await Feedback.findById(parentFeedback);
-      if (!parentFeedbackItem || parentFeedbackItem.targetId.toString() !== targetId) {
+      if (
+        !parentFeedbackItem ||
+        parentFeedbackItem.targetId.toString() !== targetId
+      ) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid parent feedback'
+          error: "Invalid parent feedback",
         });
       }
     }
@@ -193,28 +196,30 @@ const createFeedback = async (req, res) => {
       content,
       rating,
       parentFeedback,
-      author: req.user._id
+      author: req.user._id,
     });
 
     // If this is a reply, add it to parent's replies array
     if (parentFeedback) {
-      await Feedback.findByIdAndUpdate(
-        parentFeedback,
-        { $push: { replies: feedback._id } }
-      );
+      await Feedback.findByIdAndUpdate(parentFeedback, {
+        $push: { replies: feedback._id },
+      });
     }
 
-    await feedback.populate('author', 'firstName lastName username profilePicture');
+    await feedback.populate(
+      "author",
+      "firstName lastName username profilePicture"
+    );
 
     res.status(201).json({
       success: true,
-      feedback
+      feedback,
     });
   } catch (error) {
-    console.error('Create feedback error:', error);
+    console.error("Create feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -229,44 +234,40 @@ const updateFeedback = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
     if (!feedback.canEdit(req.user)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to edit this feedback'
+        error: "Not authorized to edit this feedback",
       });
     }
 
-    const allowedFields = ['content', 'rating'];
+    const allowedFields = ["content", "rating"];
     const updateData = {};
 
-    allowedFields.forEach(field => {
+    allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         updateData[field] = req.body[field];
       }
     });
 
-    feedback = await Feedback.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).populate('author', 'firstName lastName username profilePicture');
+    feedback = await Feedback.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("author", "firstName lastName username profilePicture");
 
     res.status(200).json({
       success: true,
-      feedback
+      feedback,
     });
   } catch (error) {
-    console.error('Update feedback error:', error);
+    console.error("Update feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -281,14 +282,14 @@ const deleteFeedback = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
     if (!feedback.canDelete(req.user)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to delete this feedback'
+        error: "Not authorized to delete this feedback",
       });
     }
 
@@ -296,13 +297,13 @@ const deleteFeedback = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Feedback deleted successfully'
+      message: "Feedback deleted successfully",
     });
   } catch (error) {
-    console.error('Delete feedback error:', error);
+    console.error("Delete feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -317,44 +318,46 @@ const toggleLike = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
     if (!feedback.canView(req.user)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this feedback'
+        error: "Not authorized to view this feedback",
       });
     }
 
     const existingLike = feedback.likes.find(
-      like => like.user.toString() === req.user._id.toString()
+      (like) => like.user.toString() === req.user._id.toString()
     );
 
     let action;
     if (existingLike) {
       await feedback.removeLike(req.user._id);
-      action = 'unliked';
+      action = "unliked";
     } else {
       await feedback.addLike(req.user._id);
-      action = 'liked';
+      action = "liked";
     }
 
-    const updatedFeedback = await Feedback.findById(req.params.id)
-      .populate('author', 'firstName lastName username');
+    const updatedFeedback = await Feedback.findById(req.params.id).populate(
+      "author",
+      "firstName lastName username"
+    );
 
     res.status(200).json({
       success: true,
       action,
       likeCount: updatedFeedback.likeCount,
-      feedback: updatedFeedback
+      feedback: updatedFeedback,
     });
   } catch (error) {
-    console.error('Toggle like error:', error);
+    console.error("Toggle like error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -366,10 +369,10 @@ const voteHelpful = async (req, res) => {
   try {
     const { isHelpful } = req.body;
 
-    if (typeof isHelpful !== 'boolean') {
+    if (typeof isHelpful !== "boolean") {
       return res.status(400).json({
         success: false,
-        error: 'isHelpful must be a boolean value'
+        error: "isHelpful must be a boolean value",
       });
     }
 
@@ -378,21 +381,21 @@ const voteHelpful = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
     if (!feedback.canView(req.user)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this feedback'
+        error: "Not authorized to view this feedback",
       });
     }
 
-    if (!['review', 'suggestion'].includes(feedback.feedbackType)) {
+    if (!["review", "suggestion"].includes(feedback.feedbackType)) {
       return res.status(400).json({
         success: false,
-        error: 'Can only vote on reviews and suggestions'
+        error: "Can only vote on reviews and suggestions",
       });
     }
 
@@ -400,15 +403,15 @@ const voteHelpful = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Vote recorded successfully',
+      message: "Vote recorded successfully",
       helpfulCount: feedback.helpfulCount,
-      notHelpfulCount: feedback.notHelpfulCount
+      notHelpfulCount: feedback.notHelpfulCount,
     });
   } catch (error) {
-    console.error('Vote helpful error:', error);
+    console.error("Vote helpful error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -423,7 +426,7 @@ const flagFeedback = async (req, res) => {
     if (!reason) {
       return res.status(400).json({
         success: false,
-        error: 'Reason is required'
+        error: "Reason is required",
       });
     }
 
@@ -432,14 +435,14 @@ const flagFeedback = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
     if (!feedback.canView(req.user)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this feedback'
+        error: "Not authorized to view this feedback",
       });
     }
 
@@ -447,13 +450,13 @@ const flagFeedback = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Feedback flagged successfully'
+      message: "Feedback flagged successfully",
     });
   } catch (error) {
-    console.error('Flag feedback error:', error);
+    console.error("Flag feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -468,7 +471,7 @@ const getFeedbackStats = async (req, res) => {
     if (!targetId || !targetType) {
       return res.status(400).json({
         success: false,
-        error: 'targetId and targetType are required'
+        error: "targetId and targetType are required",
       });
     }
 
@@ -478,32 +481,32 @@ const getFeedbackStats = async (req, res) => {
           targetId: mongoose.Types.ObjectId(targetId),
           targetType,
           isDeleted: false,
-          visibility: 'public'
-        }
+          visibility: "public",
+        },
       },
       {
         $group: {
-          _id: '$feedbackType',
+          _id: "$feedbackType",
           count: { $sum: 1 },
-          avgRating: { $avg: '$rating' },
-          totalLikes: { $sum: { $size: '$likes' } }
-        }
-      }
+          avgRating: { $avg: "$rating" },
+          totalLikes: { $sum: { $size: "$likes" } },
+        },
+      },
     ]);
 
     const totalFeedback = await Feedback.countDocuments({
       targetId,
       targetType,
       isDeleted: false,
-      visibility: 'public'
+      visibility: "public",
     });
 
     const totalRatings = await Feedback.countDocuments({
       targetId,
       targetType,
-      feedbackType: { $in: ['rating', 'review'] },
+      feedbackType: { $in: ["rating", "review"] },
       isDeleted: false,
-      visibility: 'public'
+      visibility: "public",
     });
 
     const ratingStats = await Feedback.aggregate([
@@ -511,18 +514,18 @@ const getFeedbackStats = async (req, res) => {
         $match: {
           targetId: mongoose.Types.ObjectId(targetId),
           targetType,
-          feedbackType: { $in: ['rating', 'review'] },
+          feedbackType: { $in: ["rating", "review"] },
           isDeleted: false,
-          visibility: 'public'
-        }
+          visibility: "public",
+        },
       },
       {
         $group: {
           _id: null,
-          avgRating: { $avg: '$rating' },
-          count: { $sum: 1 }
-        }
-      }
+          avgRating: { $avg: "$rating" },
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     const overallRating = ratingStats.length > 0 ? ratingStats[0].avgRating : 0;
@@ -533,19 +536,18 @@ const getFeedbackStats = async (req, res) => {
         totalFeedback,
         totalRatings,
         overallRating: Math.round(overallRating * 10) / 10,
-        byType: stats
-      }
+        byType: stats,
+      },
     });
   } catch (error) {
-    console.error('Get feedback stats error:', error);
+    console.error("Get feedback stats error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
 
-// 🔥 NUEVO: listado de feedbacks marcados para moderación
 // @route   GET /api/feedback/moderation/flagged
 // @access  Private (admin/moderator)
 const getFlaggedFeedback = async (req, res) => {
@@ -556,12 +558,12 @@ const getFlaggedFeedback = async (req, res) => {
 
     const query = {
       isDeleted: false,
-      isFlagged: true
+      isFlagged: true,
     };
 
     const feedback = await Feedback.find(query)
-      .populate('author', 'firstName lastName username')
-      .populate('targetId')
+      .populate("author", "firstName lastName username")
+      .populate("targetId")
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(startIndex);
@@ -573,24 +575,23 @@ const getFlaggedFeedback = async (req, res) => {
       totalPages: Math.ceil(total / limit),
       totalFeedback: total,
       hasNext: page < Math.ceil(total / limit),
-      hasPrev: page > 1
+      hasPrev: page > 1,
     };
 
     res.status(200).json({
       success: true,
       pagination,
-      feedback
+      feedback,
     });
   } catch (error) {
-    console.error('Get flagged feedback error:', error);
+    console.error("Get flagged feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
 
-// 🔥 NUEVO: moderar un feedback (ocultar/rehabilitar y limpiar flags)
 // @route   PATCH /api/feedback/:id/moderate
 // @access  Private (admin/moderator)
 const moderateFeedback = async (req, res) => {
@@ -602,14 +603,13 @@ const moderateFeedback = async (req, res) => {
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        error: 'Feedback not found'
+        error: "Feedback not found",
       });
     }
 
-    // Solo admin/moderator llegan aquí por el middleware de roles
     const updates = {};
 
-    if (visibility && ['public', 'hidden'].includes(visibility)) {
+    if (visibility && ["public", "hidden"].includes(visibility)) {
       updates.visibility = visibility;
     }
 
@@ -618,21 +618,19 @@ const moderateFeedback = async (req, res) => {
       updates.flaggedBy = [];
     }
 
-    const updated = await Feedback.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    ).populate('author', 'firstName lastName username');
+    const updated = await Feedback.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    }).populate("author", "firstName lastName username");
 
     res.status(200).json({
       success: true,
-      feedback: updated
+      feedback: updated,
     });
   } catch (error) {
-    console.error('Moderate feedback error:', error);
+    console.error("Moderate feedback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: "Server error",
     });
   }
 };
@@ -648,5 +646,5 @@ module.exports = {
   flagFeedback,
   getFeedbackStats,
   getFlaggedFeedback,
-  moderateFeedback
+  moderateFeedback,
 };

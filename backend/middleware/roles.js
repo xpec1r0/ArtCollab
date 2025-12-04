@@ -2,23 +2,22 @@
 
 /**
  * Middleware para requerir uno o varios roles
- * Ej: requireRole('admin', 'moderator')
  */
 const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        error: 'Not authenticated'
+        error: "Not authenticated",
       });
     }
 
-    const userRole = req.user.role || 'user';
+    const userRole = req.user.role || "user";
 
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
-        error: 'Insufficient permissions'
+        error: "Insufficient permissions",
       });
     }
 
@@ -28,21 +27,19 @@ const requireRole = (...allowedRoles) => {
 
 /**
  * Middleware para permitir:
- *  - el propio usuario (req.params.id)
- *  - o ciertos roles elevados
  */
 const requireSelfOrRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        error: 'Not authenticated'
+        error: "Not authenticated",
       });
     }
 
-    const userRole = req.user.role || 'user';
+    const userRole = req.user.role || "user";
     const userId = req.user._id.toString();
-    const paramId = (req.params.id || req.params.userId || '').toString();
+    const paramId = (req.params.id || req.params.userId || "").toString();
 
     if (userId === paramId) {
       return next();
@@ -54,12 +51,12 @@ const requireSelfOrRole = (...allowedRoles) => {
 
     return res.status(403).json({
       success: false,
-      error: 'Insufficient permissions'
+      error: "Insufficient permissions",
     });
   };
 };
 
 module.exports = {
   requireRole,
-  requireSelfOrRole
+  requireSelfOrRole,
 };

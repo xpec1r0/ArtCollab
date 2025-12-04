@@ -11,7 +11,6 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Enviar correo genérico
  * @param {Object} options
  * @param {string} options.to
  * @param {string} options.subject
