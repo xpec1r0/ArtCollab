@@ -1,3 +1,4 @@
+// backend/models/Feedback.js
 const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
@@ -12,21 +13,21 @@ const feedbackSchema = new mongoose.Schema({
     required: [true, 'Target type is required'],
     enum: ['Media', 'Project', 'User']
   },
-  
+
   // Feedback type
   feedbackType: {
     type: String,
     required: [true, 'Feedback type is required'],
     enum: ['comment', 'rating', 'review', 'suggestion']
   },
-  
+
   // Author information
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Author is required']
   },
-  
+
   // Content
   content: {
     type: String,
@@ -36,7 +37,7 @@ const feedbackSchema = new mongoose.Schema({
     maxlength: [1000, 'Feedback content cannot exceed 1000 characters'],
     trim: true
   },
-  
+
   // Rating (for rating and review types)
   rating: {
     type: Number,
@@ -46,20 +47,20 @@ const feedbackSchema = new mongoose.Schema({
       return ['rating', 'review'].includes(this.feedbackType);
     }
   },
-  
+
   // Threading for replies
   parentFeedback: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Feedback',
     default: null
   },
-  
+
   // Replies to this feedback
   replies: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Feedback'
   }],
-  
+
   // Engagement on this feedback
   likes: [{
     user: {
@@ -71,14 +72,14 @@ const feedbackSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Moderation
   isEdited: {
     type: Boolean,
     default: false
   },
   editedAt: Date,
-  
+
   isDeleted: {
     type: Boolean,
     default: false
@@ -88,7 +89,7 @@ const feedbackSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  
+
   isFlagged: {
     type: Boolean,
     default: false
@@ -107,14 +108,14 @@ const feedbackSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Visibility
   visibility: {
     type: String,
     enum: ['public', 'private', 'hidden'],
     default: 'public'
   },
-  
+
   // Helpful votes (for reviews and suggestions)
   helpfulVotes: [{
     user: {
@@ -163,27 +164,69 @@ feedbackSchema.index({ parentFeedback: 1 });
 feedbackSchema.index({ feedbackType: 1 });
 feedbackSchema.index({ visibility: 1, isDeleted: 1 });
 
+// Helpers internos para roles
+const isPrivileged = (role) => ['admin', 'moderator'].includes(role || 'user');
+
 // Method to check if user can view this feedback
-feedbackSchema.methods.canView = function(userId) {
+feedbackSchema.methods.canView = function(userOrId) {
   if (this.isDeleted) return false;
+
+  // Invitado
+  if (!userOrId) {
+    return this.visibility === 'public';
+  }
+
+  const userId = userOrId._id
+    ? userOrId._id.toString()
+    : userOrId.toString();
+
+  const role = userOrId.role || 'user';
+
+  if (isPrivileged(role)) return true;
+
   if (this.visibility === 'public') return true;
-  if (this.visibility === 'private') return this.author.toString() === userId.toString();
+
+  if (this.visibility === 'private') {
+    return this.author.toString() === userId;
+  }
+
+  if (this.visibility === 'hidden') {
+    // Solo admin/moderator, ya cubierto arriba
+    return false;
+  }
+
   return false;
 };
 
 // Method to check if user can edit this feedback
-feedbackSchema.methods.canEdit = function(userId) {
-  if (this.isDeleted) return false;
-  return this.author.toString() === userId.toString();
+feedbackSchema.methods.canEdit = function(userOrId) {
+  if (this.isDeleted || !userOrId) return false;
+
+  const userId = userOrId._id
+    ? userOrId._id.toString()
+    : userOrId.toString();
+
+  const role = userOrId.role || 'user';
+
+  if (this.author.toString() === userId) return true;
+  if (isPrivileged(role)) return true;
+
+  return false;
 };
 
 // Method to check if user can delete this feedback
-feedbackSchema.methods.canDelete = function(userId) {
-  // Author can always delete their own feedback
-  if (this.author.toString() === userId.toString()) return true;
-  
-  // TODO: Add logic for moderators/admins
-  // For now, only the author can delete
+feedbackSchema.methods.canDelete = function(userOrId) {
+  if (!userOrId) return false;
+
+  const userId = userOrId._id
+    ? userOrId._id.toString()
+    : userOrId.toString();
+
+  const role = userOrId.role || 'user';
+
+  if (this.author.toString() === userId) return true;
+  if (isPrivileged(role)) return true;
+
   return false;
 };
 
@@ -213,7 +256,7 @@ feedbackSchema.methods.addReply = function(replyId) {
 // Method to add helpful vote
 feedbackSchema.methods.addHelpfulVote = function(userId, isHelpful) {
   const existingVote = this.helpfulVotes.find(vote => vote.user.toString() === userId.toString());
-  
+
   if (existingVote) {
     existingVote.isHelpful = isHelpful;
     existingVote.votedAt = new Date();
@@ -224,27 +267,27 @@ feedbackSchema.methods.addHelpfulVote = function(userId, isHelpful) {
       votedAt: new Date()
     });
   }
-  
+
   return this.save();
 };
 
 // Method to flag feedback
 feedbackSchema.methods.flagFeedback = function(userId, reason) {
   const existingFlag = this.flaggedBy.find(flag => flag.user.toString() === userId.toString());
-  
+
   if (!existingFlag) {
     this.flaggedBy.push({
       user: userId,
       reason,
       flaggedAt: new Date()
     });
-    
+
     // Auto-flag if multiple users flag it
     if (this.flaggedBy.length >= 3) {
       this.isFlagged = true;
     }
   }
-  
+
   return this.save();
 };
 
@@ -268,4 +311,3 @@ feedbackSchema.pre('save', function(next) {
 });
 
 module.exports = mongoose.model('Feedback', feedbackSchema);
-

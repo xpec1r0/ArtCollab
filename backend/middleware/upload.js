@@ -1,0 +1,67 @@
+// backend/middleware/upload.js
+const multer = require('multer');
+const path = require('path');
+
+// Usamos memoria porque luego lo mandamos a Cloudinary
+const storage = multer.memoryStorage();
+
+// Mime types permitidos (puedes ampliar la lista si quieres)
+const ALLOWED_MIME_TYPES = [
+  // Imágenes
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  // Audio
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/ogg',
+  // Video
+  'video/mp4',
+  'video/quicktime',
+  'video/x-msvideo',
+  // Documentos
+  'application/pdf'
+];
+
+const fileFilter = (req, file, cb) => {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Unsupported file type'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024 // 20MB
+  },
+  fileFilter
+});
+
+// Wrapper para manejar errores de Multer de forma bonita
+const uploadSingleMedia = (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+          success: false,
+          error: err.message
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: err.message || 'File upload error'
+      });
+    }
+    next();
+  });
+};
+
+module.exports = {
+  uploadSingleMedia
+};

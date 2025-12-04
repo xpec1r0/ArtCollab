@@ -1,71 +1,127 @@
-// middleware/auth.js
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+// backend/middleware/auth.js
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const createError = (message, statusCode = 401) => {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
+/**
+ * Extrae el JWT desde:
+ * - Authorization: Bearer <token>
+ * - cookies: token | jwt | access_token
+ */
+const getTokenFromRequest = (req) => {
+  let token = null;
+
+  // 1) Header Authorization: Bearer xxx
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer ')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  // 2) Cookies (por si en el futuro también usamos cookie httpOnly)
+  if (!token && req.cookies) {
+    token =
+      req.cookies.token ||
+      req.cookies.jwt ||
+      req.cookies.access_token ||
+      null;
+  }
+
+  return token;
 };
 
-// Requiere estar logueado
-exports.protect = async (req, res, next) => {
+/**
+ * Middleware: require valid JWT
+ * - Lee token (header o cookie)
+ * - Carga el usuario en req.user
+ */
+const protect = async (req, res, next) => {
+  const token = getTokenFromRequest(req);
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'Not authorized, no token provided',
+    });
+  }
+
   try {
-    let token;
-
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    }
-
-    if (!token) {
-      throw createError("Not authorized, no token", 401);
-    }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id);
     if (!user || !user.isActive) {
-      throw createError("Not authorized", 401);
+      return res.status(401).json({
+        success: false,
+        error: 'Not authorized, user not found or inactive',
+      });
     }
 
     req.user = user;
     next();
   } catch (err) {
-    next(err);
+    console.error('JWT verify error:', err);
+    return res.status(401).json({
+      success: false,
+      error: 'Not authorized, invalid token',
+    });
   }
 };
 
-// Autenticación opcional (para endpoints públicos que mejoran con user)
-exports.optionalAuth = async (req, res, next) => {
+/**
+ * Middleware: optionalAuth
+ * - Si hay token válido, pone req.user
+ * - Si no hay token o hay error, sigue (usuario anónimo)
+ */
+const optionalAuth = async (req, res, next) => {
+  const token = getTokenFromRequest(req);
+
+  if (!token) {
+    return next();
+  }
+
   try {
-    let token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
+    if (user && user.isActive) {
+      req.user = user;
     }
 
-    if (!token) {
-      return next();
+    return next();
+  } catch (err) {
+    // Token inválido → lo ignoramos, tratamos como usuario no logeado
+    console.warn('optionalAuth: invalid token ignored');
+    return next();
+  }
+};
+
+/**
+ * Middleware: authorize
+ * - Restringe acceso por roles globales
+ *   ej: authorize('admin', 'support')
+ */
+const authorize = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authorized, no user in request',
+      });
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id);
-      if (user && user.isActive) {
-        req.user = user;
-      }
-    } catch (err) {
-      // Token inválido => lo ignoramos y seguimos sin user
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden, insufficient permissions',
+      });
     }
 
     next();
-  } catch (err) {
-    next(err);
-  }
+  };
+};
+
+module.exports = {
+  protect,
+  optionalAuth,
+  authorize,
 };

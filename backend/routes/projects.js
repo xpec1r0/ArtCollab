@@ -1,3 +1,4 @@
+// backend/routes/projects.js
 const express = require('express');
 const {
   getProjects,
@@ -9,7 +10,10 @@ const {
   inviteUser,
   joinProject,
   leaveProject,
-  addMedia
+  addMedia,
+  createMilestone,
+  updateMilestone,
+  deleteMilestone
 } = require('../controllers/projectController');
 
 const { protect, optionalAuth } = require('../middleware/auth');
@@ -22,19 +26,29 @@ const {
 
 const router = express.Router();
 
-// Public routes
-router.get('/', validatePagination, validateSearch, getProjects);
+// 🔓 Public / semi-public (GitHub-style)
+router.get('/', validatePagination, validateSearch, optionalAuth, getProjects);
 router.get('/:id', validateObjectId('id'), optionalAuth, getProject);
 
-// Protected routes
+// 🔒 Project CRUD
 router.post('/', protect, validateProjectCreation, createProject);
 router.put('/:id', validateObjectId('id'), protect, updateProject);
 router.delete('/:id', validateObjectId('id'), protect, deleteProject);
+
+// 🔒 Likes
 router.post('/:id/like', validateObjectId('id'), protect, toggleLike);
+
+// 🔒 Colaboración / equipo
 router.post('/:id/invite', validateObjectId('id'), protect, inviteUser);
 router.post('/:id/join', validateObjectId('id'), protect, joinProject);
 router.post('/:id/leave', validateObjectId('id'), protect, leaveProject);
+
+// 🔒 Media dentro del proyecto
 router.post('/:id/media', validateObjectId('id'), protect, addMedia);
 
-module.exports = router;
+// 🔒 Milestones / timeline
+router.post('/:id/milestones', validateObjectId('id'), protect, createMilestone);
+router.patch('/:id/milestones/:milestoneId', validateObjectId('id'), validateObjectId('milestoneId'), protect, updateMilestone);
+router.delete('/:id/milestones/:milestoneId', validateObjectId('id'), validateObjectId('milestoneId'), protect, deleteMilestone);
 
+module.exports = router;

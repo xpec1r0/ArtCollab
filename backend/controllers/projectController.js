@@ -1,94 +1,169 @@
+// backend/controllers/projectController.js
 const Project = require('../models/Project');
 const User = require('../models/User');
 const Media = require('../models/Media');
+const mongoose = require('mongoose');
 
-// @desc    Get all projects
-// @route   GET /api/projects
-// @access  Public
+/**
+ * GET /api/projects
+ * Listado tipo GitHub:
+ * - Invitado: solo proyectos públicos
+ * - Autenticado: públicos + donde es owner + donde es participante activo
+ * - Si viene ?owner=... → filtramos por owner directamente (ej: /my-projects)
+ */
 const getProjects = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 12;
     const startIndex = (page - 1) * limit;
-    
-    // Build query - only show public projects by default
-    let query = { visibility: 'public' };
-    
-    // Search by title or description
-    if (req.query.q) {
-      const searchRegex = new RegExp(req.query.q, 'i');
-      query.$or = [
+
+    const q = req.query.q || '';
+    const category = req.query.category;
+    const projectType = req.query.projectType;
+    const status = req.query.status;
+    const featured = req.query.featured === 'true';
+    const tagsQuery = req.query.tags;
+    const visibilityFilter = req.query.visibility;
+    const ownerFilterRaw = req.query.owner;
+
+    // sort
+    const sortParam = req.query.sort || '-createdAt';
+    const sortField = sortParam.startsWith('-')
+      ? sortParam.slice(1)
+      : sortParam;
+    const sortOrder = sortParam.startsWith('-') ? -1 : 1;
+    const sortBy = { [sortField]: sortOrder };
+
+    // Filtro base (sin aún meter lógica de visibilidad/owner)
+    const baseFilter = {};
+
+    // Búsqueda por texto
+    if (q) {
+      const searchRegex = new RegExp(q, 'i');
+      baseFilter.$or = [
         { title: searchRegex },
         { description: searchRegex },
-        { tags: { $in: [searchRegex] } }
+        { tags: { $in: [q.toLowerCase()] } },
       ];
     }
-    
-    // Filter by category
-    if (req.query.category) {
-      query.category = req.query.category;
+
+    if (category) {
+      baseFilter.category = category;
     }
-    
-    // Filter by project type
-    if (req.query.projectType) {
-      query.projectType = req.query.projectType;
+
+    if (projectType) {
+      baseFilter.projectType = projectType;
     }
-    
-    // Filter by status
-    if (req.query.status) {
-      query.status = req.query.status;
+
+    if (status) {
+      baseFilter.status = status;
     }
-    
-    // Filter by tags
-    if (req.query.tags) {
-      const tags = req.query.tags.split(',').map(tag => tag.trim().toLowerCase());
-      query.tags = { $in: tags };
+
+    if (featured) {
+      baseFilter.isFeatured = true;
     }
-    
-    // Filter featured
-    if (req.query.featured === 'true') {
-      query.isFeatured = true;
+
+    if (tagsQuery) {
+      const tags = tagsQuery
+        .split(',')
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+      if (tags.length > 0) {
+        baseFilter.tags = { $in: tags };
+      }
     }
-    
-    // Sort options
-    let sortBy = {};
-    if (req.query.sort) {
-      const sortField = req.query.sort.startsWith('-') ? req.query.sort.slice(1) : req.query.sort;
-      const sortOrder = req.query.sort.startsWith('-') ? -1 : 1;
-      sortBy[sortField] = sortOrder;
+
+    if (visibilityFilter) {
+      baseFilter.visibility = visibilityFilter;
+    }
+
+    // ==========================
+    //  LÓGICA DE OWNER / VISIBILIDAD
+    // ==========================
+    let query;
+
+    // Normalizamos ownerFilter (aceptamos "me" o un ObjectId válido)
+    let ownerId = null;
+    if (ownerFilterRaw) {
+      if (ownerFilterRaw === 'me' && req.user) {
+        ownerId = req.user._id;
+      } else if (mongoose.Types.ObjectId.isValid(ownerFilterRaw)) {
+        // dejamos que Mongoose castee el string; no usamos new ObjectId()
+        ownerId = ownerFilterRaw;
+      }
+    }
+
+    if (ownerId) {
+      // Caso /my-projects u otros filtros de propietario:
+      // → solo proyectos cuyo owner sea ese id
+      query = {
+        ...baseFilter,
+        owner: ownerId,
+      };
+    } else if (!req.user) {
+      // Invitado sin filtro de owner:
+      // → solo proyectos públicos
+      query = {
+        ...baseFilter,
+        visibility: 'public',
+      };
     } else {
-      sortBy.createdAt = -1; // Default sort by newest
+      // Usuario autenticado sin filtro de owner:
+      // → públicos + owner + donde participa (status 'active')
+      const userId = req.user._id;
+
+      const common = baseFilter;
+
+      query = {
+        $or: [
+          {
+            ...common,
+            visibility: 'public',
+          },
+          {
+            ...common,
+            owner: userId,
+          },
+          {
+            ...common,
+            'participants.user': userId,
+            'participants.status': 'active',
+          },
+        ],
+      };
     }
-    
+
     const projects = await Project.find(query)
       .populate('owner', 'firstName lastName username profilePicture')
-      .populate('participants.user', 'firstName lastName username profilePicture')
+      .populate(
+        'participants.user',
+        'firstName lastName username profilePicture'
+      )
       .sort(sortBy)
-      .limit(limit * 1)
+      .limit(limit)
       .skip(startIndex);
-    
+
     const total = await Project.countDocuments(query);
-    
-    // Pagination info
+
     const pagination = {
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       totalProjects: total,
       hasNext: page < Math.ceil(total / limit),
-      hasPrev: page > 1
+      hasPrev: page > 1,
     };
-    
+
     res.status(200).json({
       success: true,
       count: projects.length,
       pagination,
-      projects
+      projects,
     });
   } catch (error) {
     console.error('Get projects error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -99,46 +174,54 @@ const getProjects = async (req, res) => {
 const getProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
-      .populate('owner', 'firstName lastName username profilePicture bio')
-      .populate('participants.user', 'firstName lastName username profilePicture')
-      .populate('participants.invitedBy', 'firstName lastName username')
-      .populate('media.mediaItem', 'title cloudUrl thumbnailUrl mediaType category')
+      .populate(
+        'owner',
+        'firstName lastName username profilePicture bio'
+      )
+      .populate(
+        'participants.user',
+        'firstName lastName username profilePicture'
+      )
+      .populate(
+        'participants.invitedBy',
+        'firstName lastName username'
+      )
+      .populate(
+        'media.mediaItem',
+        'title cloudUrl thumbnailUrl mediaType category'
+      )
       .populate('media.addedBy', 'firstName lastName username')
       .populate('likes.user', 'firstName lastName username');
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Check if user can view this project
-    const userId = req.user ? req.user._id : null;
+
+    const user = req.user || null;
+    const userId = user ? user._id : null;
+
     if (!project.canView(userId)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this project'
+        error: 'Not authorized to view this project',
       });
     }
-    
-    // Increment view count (only if not a participant)
-    if (!userId || !project.participants.some(p => 
-      p.user._id.toString() === userId.toString() && p.status === 'active'
-    )) {
-      project.views += 1;
-      await project.save();
-    }
-    
+
+    // Increment view count (solo si no es participante activo)
+    await project.incrementViews(userId);
+
     res.status(200).json({
       success: true,
-      project
+      project,
     });
   } catch (error) {
     console.error('Get project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -156,9 +239,11 @@ const createProject = async (req, res) => {
       visibility,
       tags,
       deadline,
-      settings
+      settings,
+      startDate,
+      endDate,
     } = req.body;
-    
+
     const project = await Project.create({
       title,
       description,
@@ -167,135 +252,143 @@ const createProject = async (req, res) => {
       owner: req.user._id,
       visibility: visibility || 'participants_only',
       tags: tags || [],
-      deadline,
-      settings: settings || {}
+      deadline: deadline || null,
+      startDate: startDate || Date.now(),
+      endDate: endDate || null,
+      settings: settings || {},
     });
-    
-    // Add owner as first participant with full permissions
-    project.participants.push({
-      user: req.user._id,
-      role: 'owner',
-      permissions: {
-        canEdit: true,
-        canInvite: true,
-        canManageMedia: true,
-        canDelete: true
-      },
-      status: 'active'
-    });
-    
-    await project.save();
-    await project.populate('owner', 'firstName lastName username profilePicture');
-    
+
+    await project.populate(
+      'owner',
+      'firstName lastName username profilePicture'
+    );
+    await project.populate(
+      'participants.user',
+      'firstName lastName username profilePicture'
+    );
+
     res.status(201).json({
       success: true,
-      project
+      project,
     });
   } catch (error) {
     console.error('Create project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
 
 // @desc    Update project
 // @route   PUT /api/projects/:id
-// @access  Private (owner or participant with edit permission)
+// @access  Private (owner o participante con canEdit)
 const updateProject = async (req, res) => {
   try {
     let project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Check if user can edit this project
+
     if (!project.canEdit(req.user._id)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to edit this project'
+        error: 'Not authorized to edit this project',
       });
     }
-    
+
     const allowedFields = [
       'title',
       'description',
       'category',
+      'projectType',
       'visibility',
       'tags',
       'deadline',
       'status',
-      'settings'
+      'settings',
+      'startDate',
+      'endDate',
+      'isFeatured',
     ];
-    
+
     const updateData = {};
-    allowedFields.forEach(field => {
+    allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         updateData[field] = req.body[field];
       }
     });
-    
+
     project = await Project.findByIdAndUpdate(
       req.params.id,
       updateData,
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
-    ).populate('owner', 'firstName lastName username profilePicture')
-     .populate('participants.user', 'firstName lastName username profilePicture');
-    
+    )
+      .populate(
+        'owner',
+        'firstName lastName username profilePicture'
+      )
+      .populate(
+        'participants.user',
+        'firstName lastName username profilePicture'
+      );
+
     res.status(200).json({
       success: true,
-      project
+      project,
     });
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
 
 // @desc    Delete project
 // @route   DELETE /api/projects/:id
-// @access  Private (owner only)
+// @access  Private (owner o admin/support)
 const deleteProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Only owner can delete project
-    if (project.owner.toString() !== req.user._id.toString()) {
+
+    const isOwner =
+      project.owner.toString() === req.user._id.toString();
+    const isModerator = ['admin', 'support'].includes(req.user.role);
+
+    if (!isOwner && !isModerator) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to delete this project'
+        error: 'Not authorized to delete this project',
       });
     }
-    
+
     await Project.findByIdAndDelete(req.params.id);
-    
+
     res.status(200).json({
       success: true,
-      message: 'Project deleted successfully'
+      message: 'Project deleted successfully',
     });
   } catch (error) {
     console.error('Delete project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -306,26 +399,26 @@ const deleteProject = async (req, res) => {
 const toggleLike = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Check if user can view this project
+
     if (!project.canView(req.user._id)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to view this project'
+        error: 'Not authorized to view this project',
       });
     }
-    
+
     const existingLike = project.likes.find(
-      like => like.user.toString() === req.user._id.toString()
+      (like) =>
+        like.user.toString() === req.user._id.toString()
     );
-    
+
     let action;
     if (existingLike) {
       await project.removeLike(req.user._id);
@@ -334,79 +427,86 @@ const toggleLike = async (req, res) => {
       await project.addLike(req.user._id);
       action = 'liked';
     }
-    
-    // Get updated project with like count
-    const updatedProject = await Project.findById(req.params.id)
-      .populate('owner', 'firstName lastName username');
-    
+
+    const updatedProject = await Project.findById(req.params.id).populate(
+      'owner',
+      'firstName lastName username'
+    );
+
     res.status(200).json({
       success: true,
       action,
       likeCount: updatedProject.likeCount,
-      project: updatedProject
+      project: updatedProject,
     });
   } catch (error) {
     console.error('Toggle like error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
 
 // @desc    Invite user to project
 // @route   POST /api/projects/:id/invite
-// @access  Private (owner or participant with invite permission)
+// @access  Private (owner o participante con canInvite)
 const inviteUser = async (req, res) => {
   try {
     const { userId, role } = req.body;
-    
+
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Check if user can invite to this project
-    const userRole = project.getUserRole(req.user._id);
-    const participant = project.participants.find(p => 
-      p.user.toString() === req.user._id.toString() && p.status === 'active'
-    );
-    
-    if (!userRole || (userRole !== 'owner' && (!participant || !participant.permissions.canInvite))) {
+
+    if (!project.canInvite(req.user._id)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to invite users to this project'
+        error:
+          'Not authorized to invite users to this project',
       });
     }
-    
-    // Check if user exists
+
+    if (project.hasReachedMaxParticipants()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Max participants limit reached',
+      });
+    }
+
     const invitedUser = await User.findById(userId);
     if (!invitedUser) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       });
     }
-    
-    // Add participant
-    await project.addParticipant(userId, role || 'contributor', req.user._id);
-    
-    await project.populate('participants.user', 'firstName lastName username profilePicture');
-    
+
+    await project.addParticipant(
+      userId,
+      role || 'contributor',
+      req.user._id
+    );
+    await project.populate(
+      'participants.user',
+      'firstName lastName username profilePicture'
+    );
+
     res.status(200).json({
       success: true,
       message: 'User invited successfully',
-      project
+      project,
     });
   } catch (error) {
     console.error('Invite user error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -417,54 +517,62 @@ const inviteUser = async (req, res) => {
 const joinProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    const participant = project.participants.find(p => 
-      p.user.toString() === req.user._id.toString()
+
+    const participant = project.participants.find(
+      (p) =>
+        p.user.toString() === req.user._id.toString()
     );
-    
+
     if (!participant) {
       return res.status(400).json({
         success: false,
-        error: 'No invitation found for this project'
+        error: 'No invitation found for this project',
       });
     }
-    
+
     if (participant.status === 'active') {
       return res.status(400).json({
         success: false,
-        error: 'Already a member of this project'
+        error: 'Already a member of this project',
       });
     }
-    
+
     if (participant.status !== 'invited') {
       return res.status(400).json({
         success: false,
-        error: 'Invalid invitation status'
+        error: 'Invalid invitation status',
       });
     }
-    
+
+    if (project.hasReachedMaxParticipants()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Max participants limit reached',
+      });
+    }
+
     participant.status = 'active';
     participant.joinedAt = new Date();
-    
+
     await project.save();
-    
+
     res.status(200).json({
       success: true,
       message: 'Successfully joined project',
-      project
+      project,
     });
   } catch (error) {
     console.error('Join project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -475,46 +583,50 @@ const joinProject = async (req, res) => {
 const leaveProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Owner cannot leave their own project
-    if (project.owner.toString() === req.user._id.toString()) {
+
+    if (
+      project.owner.toString() === req.user._id.toString()
+    ) {
       return res.status(400).json({
         success: false,
-        error: 'Project owner cannot leave the project'
+        error:
+          'Project owner cannot leave the project',
       });
     }
-    
-    const participant = project.participants.find(p => 
-      p.user.toString() === req.user._id.toString() && p.status === 'active'
+
+    const participant = project.participants.find(
+      (p) =>
+        p.user.toString() === req.user._id.toString() &&
+        p.status === 'active'
     );
-    
+
     if (!participant) {
       return res.status(400).json({
         success: false,
-        error: 'Not a member of this project'
+        error: 'Not a member of this project',
       });
     }
-    
+
     participant.status = 'left';
-    
+
     await project.save();
-    
+
     res.status(200).json({
       success: true,
-      message: 'Successfully left project'
+      message: 'Successfully left project',
     });
   } catch (error) {
     console.error('Leave project error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
     });
   }
 };
@@ -525,66 +637,229 @@ const leaveProject = async (req, res) => {
 const addMedia = async (req, res) => {
   try {
     const { mediaId, role } = req.body;
-    
+
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({
         success: false,
-        error: 'Project not found'
+        error: 'Project not found',
       });
     }
-    
-    // Check if user can manage media in this project
-    const userRole = project.getUserRole(req.user._id);
-    const participant = project.participants.find(p => 
-      p.user.toString() === req.user._id.toString() && p.status === 'active'
-    );
-    
-    if (!userRole || (userRole !== 'owner' && (!participant || !participant.permissions.canManageMedia))) {
+
+    if (!project.canManageMedia(req.user._id)) {
       return res.status(403).json({
         success: false,
-        error: 'Not authorized to manage media in this project'
+        error:
+          'Not authorized to manage media in this project',
       });
     }
-    
-    // Check if media exists and user can access it
+
     const media = await Media.findById(mediaId);
     if (!media || !media.canView(req.user._id)) {
       return res.status(404).json({
         success: false,
-        error: 'Media not found or not accessible'
+        error:
+          'Media not found or not accessible',
       });
     }
-    
-    // Check if media is already in project
-    const existingMedia = project.media.find(m => m.mediaItem.toString() === mediaId);
+
+    const existingMedia = project.media.find(
+      (m) => m.mediaItem.toString() === mediaId
+    );
     if (existingMedia) {
       return res.status(400).json({
         success: false,
-        error: 'Media already added to project'
+        error: 'Media already added to project',
       });
     }
-    
+
     project.media.push({
       mediaItem: mediaId,
       addedBy: req.user._id,
-      role: role || 'primary'
+      role: role || 'primary',
     });
-    
+
     await project.save();
-    await project.populate('media.mediaItem', 'title cloudUrl thumbnailUrl mediaType category');
-    
+    await project.populate(
+      'media.mediaItem',
+      'title cloudUrl thumbnailUrl mediaType category'
+    );
+
     res.status(200).json({
       success: true,
       message: 'Media added to project successfully',
-      project
+      project,
     });
   } catch (error) {
     console.error('Add media error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Server error',
+    });
+  }
+};
+
+/* ===========================
+   MILESTONES
+   =========================== */
+
+// @desc    Create milestone
+// @route   POST /api/projects/:id/milestones
+// @access  Private (owner o canEdit)
+const createMilestone = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found',
+      });
+    }
+
+    if (!project.canEdit(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        error:
+          'Not authorized to manage milestones for this project',
+      });
+    }
+
+    const {
+      title,
+      description,
+      dueDate,
+      status,
+      order,
+      assignedTo,
+    } = req.body;
+
+    await project.addMilestone({
+      title,
+      description,
+      dueDate,
+      status,
+      order,
+      assignedTo,
+    });
+
+    res.status(201).json({
+      success: true,
+      milestones: project.milestones,
+    });
+  } catch (error) {
+    console.error('Create milestone error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+    });
+  }
+};
+
+// @desc    Update milestone
+// @route   PATCH /api/projects/:id/milestones/:milestoneId
+// @access  Private (owner o canEdit)
+const updateMilestone = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found',
+      });
+    }
+
+    if (!project.canEdit(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        error:
+          'Not authorized to manage milestones for this project',
+      });
+    }
+
+    const milestoneId = req.params.milestoneId;
+    const updates = {};
+
+    [
+      'title',
+      'description',
+      'dueDate',
+      'status',
+      'order',
+      'assignedTo',
+    ].forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    const result = await project.updateMilestone(
+      milestoneId,
+      updates
+    );
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error: 'Milestone not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      milestones: project.milestones,
+    });
+  } catch (error) {
+    console.error('Update milestone error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+    });
+  }
+};
+
+// @desc    Delete milestone
+// @route   DELETE /api/projects/:id/milestones/:milestoneId
+// @access  Private (owner o canEdit)
+const deleteMilestone = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found',
+      });
+    }
+
+    if (!project.canEdit(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        error:
+          'Not authorized to manage milestones for this project',
+      });
+    }
+
+    const milestoneId = req.params.milestoneId;
+    const result =
+      await project.removeMilestone(milestoneId);
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error: 'Milestone not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      milestones: project.milestones,
+    });
+  } catch (error) {
+    console.error('Delete milestone error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
     });
   }
 };
@@ -599,6 +874,8 @@ module.exports = {
   inviteUser,
   joinProject,
   leaveProject,
-  addMedia
+  addMedia,
+  createMilestone,
+  updateMilestone,
+  deleteMilestone,
 };
-

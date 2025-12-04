@@ -1,3 +1,4 @@
+// backend/models/Media.js
 const mongoose = require('mongoose');
 
 const mediaSchema = new mongoose.Schema({
@@ -13,7 +14,7 @@ const mediaSchema = new mongoose.Schema({
     maxlength: [1000, 'Description cannot exceed 1000 characters'],
     default: ''
   },
-  
+
   // Media type and format
   mediaType: {
     type: String,
@@ -23,9 +24,19 @@ const mediaSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['painting', 'music', 'design', 'illustration', 'storytelling', 'photography', 'sculpture', 'digital_art', 'other']
+    enum: [
+      'painting',
+      'music',
+      'design',
+      'illustration',
+      'storytelling',
+      'photography',
+      'sculpture',
+      'digital_art',
+      'other'
+    ]
   },
-  
+
   // File information
   fileName: {
     type: String,
@@ -43,8 +54,8 @@ const mediaSchema = new mongoose.Schema({
     type: String,
     required: [true, 'MIME type is required']
   },
-  
-  // Storage information
+
+  // Cloudinary info
   cloudUrl: {
     type: String,
     required: [true, 'Cloud storage URL is required']
@@ -53,7 +64,16 @@ const mediaSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  
+  cloudinaryPublicId: {
+    type: String,
+    index: true
+  },
+  cloudinaryResourceType: {
+    type: String,
+    enum: ['image', 'video', 'raw', 'auto'],
+    default: 'image'
+  },
+
   // Ownership and permissions
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -65,7 +85,7 @@ const mediaSchema = new mongoose.Schema({
     enum: ['public', 'private', 'collaborators'],
     default: 'public'
   },
-  
+
   // Collaboration
   collaborators: [{
     user: {
@@ -82,14 +102,14 @@ const mediaSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Tags and metadata
   tags: [{
     type: String,
     trim: true,
     lowercase: true
   }],
-  
+
   // Media-specific metadata
   metadata: {
     // For images
@@ -97,13 +117,13 @@ const mediaSchema = new mongoose.Schema({
       width: Number,
       height: Number
     },
-    // For audio
+    // For audio/video
     duration: Number,
     // For any media
     format: String,
     quality: String
   },
-  
+
   // Engagement metrics
   views: {
     type: Number,
@@ -119,14 +139,14 @@ const mediaSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  
+
   // Status
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
     default: 'published'
   },
-  
+
   // Featured flag
   isFeatured: {
     type: Boolean,
@@ -160,20 +180,31 @@ mediaSchema.index({ visibility: 1, status: 1 });
 
 // Method to check if user can view this media
 mediaSchema.methods.canView = function(userId) {
+  if (this.status === 'archived') return false;
+
   if (this.visibility === 'public') return true;
-  if (this.visibility === 'private') return this.owner.toString() === userId.toString();
+
+  if (!userId) return false;
+
+  if (this.visibility === 'private') {
+    return this.owner.toString() === userId.toString();
+  }
+
   if (this.visibility === 'collaborators') {
     if (this.owner.toString() === userId.toString()) return true;
     return this.collaborators.some(collab => collab.user.toString() === userId.toString());
   }
+
   return false;
 };
 
 // Method to check if user can edit this media
 mediaSchema.methods.canEdit = function(userId) {
+  if (!userId) return false;
   if (this.owner.toString() === userId.toString()) return true;
-  return this.collaborators.some(collab => 
-    collab.user.toString() === userId.toString() && 
+
+  return this.collaborators.some(collab =>
+    collab.user.toString() === userId.toString() &&
     ['editor', 'co-owner'].includes(collab.role)
   );
 };
@@ -200,4 +231,3 @@ mediaSchema.methods.incrementViews = function() {
 };
 
 module.exports = mongoose.model('Media', mediaSchema);
-
